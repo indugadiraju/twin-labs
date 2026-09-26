@@ -196,7 +196,7 @@ export default function DigitalTwinBody({ view, lens, dir = 1, selected, onSelec
         </g>
 
         {/* MIDDLE: the pseudo-3D body */}
-        <g className="twin-core">
+        <g className="twin-body-core">
           <g className="twin-aura" filter="url(#twin-blur-lg)" style={{ opacity: view.aura * 0.85 }}>{allPaths}</g>
           <g className="twin-ghost ghost-a">{ghostA.parts.map((part) => <path key={part.id} d={part.d} />)}</g>
           <g className="twin-ghost ghost-b">{ghostB.parts.map((part) => <path key={part.id} d={part.d} />)}</g>

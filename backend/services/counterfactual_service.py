@@ -168,7 +168,11 @@ def simulate_counterfactual(patient_id: str, change: dict, weeks: int = 4) -> di
     modified = predict_response(modified_state, modified_treatment, weeks)
 
     # Anchor risk to the existing mock trajectory; Today uses Week 1's value.
-    mock = {p["week"]: p["mock_risk_score"] for p in mock_predicted_trajectory(patient_id, weeks)}
+    # Same inputs as the Journey (timeline_service) so both show the same original risk.
+    observed_states = {c.week: c.to_dict() for c in store.list_checkins(patient_id)}
+    mock = {p["week"]: round(p["mock_risk_score"], 2) for p in mock_predicted_trajectory(
+        patient_id, weeks, baseline=twin.synthetic_baseline, observed_states=observed_states
+    )}
     for orig, mod in zip(original, modified):
         base_risk = mock.get(orig["week"], mock[1])
         effect = RISK_PER_SYMPTOM * (mod["symptom_burden"] - orig["symptom_burden"])
