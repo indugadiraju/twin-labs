@@ -127,6 +127,7 @@ export default function ResearcherDashboard({ patientId, onExit }) {
     setLoading(true)
     setError('')
     try {
+      await api.createTwin(patientId)
       const [nextCohort, patientResult] = await Promise.all([
         api.getCohortSummary(),
         api.getResearcherPatients(),
@@ -147,7 +148,8 @@ export default function ResearcherDashboard({ patientId, onExit }) {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([api.getCohortSummary(), api.getResearcherPatients()])
+    api.createTwin(patientId)
+      .then(() => Promise.all([api.getCohortSummary(), api.getResearcherPatients()]))
       .then(async ([nextCohort, patientResult]) => {
         const nextPatients = patientResult.patients || []
         const nextId = nextPatients.find((item) => item.patient_id === patientId)?.patient_id
