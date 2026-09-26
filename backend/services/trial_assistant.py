@@ -59,10 +59,10 @@ REAL_TRIAL_FAQ = [
         "a": lambda: f"This trial is sponsored by {REAL_TRIAL['sponsor']}. Source: {REAL_TRIAL['source']['url']}",
     },
     {
-        "keywords": ["eligib", "qualify", "who can join", "am i eligible"],
+        "keywords": ["eligible", "eligibility", "qualify", "who can join", "am i eligible"],
         "a": lambda: (
             "Key eligibility highlights from the public trial record: "
-            + "; ".join(REAL_TRIAL["eligibility"]["inclusion_highlights"])
+            + "; ".join(REAL_TRIAL["eligibility"]["inclusion_highlights"][:3])
             + f". Age range: {REAL_TRIAL['eligibility']['min_age']}-{REAL_TRIAL['eligibility']['max_age']}, "
             f"{REAL_TRIAL['eligibility']['sex'].lower()} only. This is general information, not an "
             "eligibility determination — your study team confirms actual eligibility. "
@@ -146,7 +146,7 @@ def _answer_next_visit_question(question: str, current_week: int | None) -> str 
 
 def _answer_fasting_or_symptom_faq(question: str) -> str | None:
     q = question.lower()
-    if "fast" in q and ("blood" in q or "test" in q or "draw" in q):
+    if "fast" in q:
         return (
             "In this demo's simulated visit schedule: Week 1 and Week 4 visits require an "
             "8-hour fast (water is fine); the Week 2 visit does not require fasting. "
@@ -187,23 +187,24 @@ def ask_trial_assistant(question: str, current_week: int | None = None) -> dict:
                 f"{STUDY_TEAM_CONTACT['email']}."
             ),
             "redirected_to_study_team": True,
+            "source": "study_team_redirect",
         }
 
     real_faq_answer = _answer_real_trial_faq(question)
     if real_faq_answer:
-        return {"answer": real_faq_answer, "redirected_to_study_team": False}
+        return {"answer": real_faq_answer, "redirected_to_study_team": False, "source": "public_trial"}
 
     next_visit_answer = _answer_next_visit_question(question, current_week)
     if next_visit_answer:
-        return {"answer": next_visit_answer, "redirected_to_study_team": False}
+        return {"answer": next_visit_answer, "redirected_to_study_team": False, "source": "simulated_visit"}
 
     visit_answer = _answer_visit_question(question)
     if visit_answer:
-        return {"answer": visit_answer, "redirected_to_study_team": False}
+        return {"answer": visit_answer, "redirected_to_study_team": False, "source": "simulated_visit"}
 
     faq_answer = _answer_fasting_or_symptom_faq(question)
     if faq_answer:
-        return {"answer": faq_answer, "redirected_to_study_team": False}
+        return {"answer": faq_answer, "redirected_to_study_team": False, "source": "demo_guidance"}
 
     return {
         "answer": (
@@ -213,4 +214,5 @@ def ask_trial_assistant(question: str, current_week: int | None = None) -> dict:
             f"your study team at {STUDY_TEAM_CONTACT['phone']} or {STUDY_TEAM_CONTACT['email']}."
         ),
         "redirected_to_study_team": False,
+        "source": "fallback",
     }

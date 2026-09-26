@@ -40,8 +40,15 @@ class SymptomIn(BaseModel):
 
 
 class CheckInRequest(BaseModel):
-    week: int
+    week: int = Field(ge=1, le=4)
     overall_wellbeing: int = Field(ge=0, le=10)
+    sleep_quality: int | None = Field(default=None, ge=0, le=10)
+    mood: str | None = Field(default=None, max_length=80)
+    anxiety: int | None = Field(default=None, ge=0, le=10)
+    fatigue: int | None = Field(default=None, ge=0, le=10)
+    nausea: int | None = Field(default=None, ge=0, le=10)
+    pain: int | None = Field(default=None, ge=0, le=10)
+    new_symptoms: list[str] = Field(default_factory=list)
     symptoms: list[SymptomIn] = []
     free_text: str | None = None
 
@@ -75,6 +82,13 @@ def submit_checkin(patient_id: str, req: CheckInRequest):
             patient_id=patient_id,
             week=req.week,
             overall_wellbeing=req.overall_wellbeing,
+            sleep_quality=req.sleep_quality,
+            mood=req.mood,
+            anxiety=req.anxiety,
+            fatigue=req.fatigue,
+            nausea=req.nausea,
+            pain=req.pain,
+            new_symptoms=req.new_symptoms,
             symptoms=[s.model_dump() for s in req.symptoms],
             free_text=req.free_text,
         )
@@ -83,6 +97,14 @@ def submit_checkin(patient_id: str, req: CheckInRequest):
 
     twin = checkin_service.apply_checkin_to_twin(checkin)
     return {"checkin": checkin.to_dict(), "twin": twin.to_dict()}
+
+
+@app.post("/api/patients/{patient_id}/advance-week")
+def advance_week(patient_id: str):
+    try:
+        return twin_service.advance_patient_week(patient_id).to_dict()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # ---------- Week 1-4 journey timeline ----------

@@ -29,6 +29,13 @@ def submit_patient_checkin(
     patient_id: str,
     week: int,
     overall_wellbeing: int,
+    sleep_quality: int | None = None,
+    mood: str | None = None,
+    anxiety: int | None = None,
+    fatigue: int | None = None,
+    nausea: int | None = None,
+    pain: int | None = None,
+    new_symptoms: list[str] | None = None,
     symptoms: list[dict] | None = None,
     free_text: str | None = None,
 ) -> PatientCheckIn:
@@ -37,8 +44,11 @@ def submit_patient_checkin(
     see apply_checkin_to_twin() for that step, kept separate so the raw
     check-in is always preserved even if twin-derivation logic changes.
     """
-    if store.get_twin(patient_id) is None:
+    twin = store.get_twin(patient_id)
+    if twin is None:
         raise ValueError(f"No twin found for patient_id={patient_id}; create the twin first")
+    if week != twin.current_week:
+        raise ValueError(f"Submit a check-in for the current demo week ({twin.current_week})")
 
     if not (0 <= overall_wellbeing <= 10):
         raise ValueError("overall_wellbeing must be between 0 and 10")
@@ -53,6 +63,13 @@ def submit_patient_checkin(
         patient_id=patient_id,
         week=week,
         overall_wellbeing=overall_wellbeing,
+        sleep_quality=sleep_quality,
+        mood=mood,
+        anxiety=anxiety,
+        fatigue=fatigue,
+        nausea=nausea,
+        pain=pain,
+        new_symptoms=new_symptoms or [],
         symptoms=symptom_entries,
         free_text=free_text,
     )
@@ -61,7 +78,11 @@ def submit_patient_checkin(
 
 
 def _derive_status(checkin: PatientCheckIn) -> TwinStatus:
-    max_severity = max((s.severity for s in checkin.symptoms), default=0)
+    max_severity = max(
+        [s.severity for s in checkin.symptoms]
+        + [value for value in (checkin.anxiety, checkin.fatigue, checkin.nausea, checkin.pain) if value is not None],
+        default=0,
+    )
 
     if max_severity >= ATTENTION_SEVERITY or checkin.overall_wellbeing <= ATTENTION_WELLBEING:
         return TwinStatus.NEEDS_ATTENTION
@@ -88,11 +109,23 @@ def apply_checkin_to_twin(checkin: PatientCheckIn):
         {"name": s.name, "severity": s.severity, "notes": s.notes} for s in checkin.symptoms
     ]
 
+    def reported_severity(name: str, structured: int | None) -> int | None:
+        if structured is not None:
+            return structured
+        return next((s.severity for s in checkin.symptoms if s.name.lower() == name.lower()), None)
+
     return twin_service.update_patient_twin(
         checkin.patient_id,
         current_week=checkin.week,
         status=status,
         overall_wellbeing=checkin.overall_wellbeing,
+        sleep_quality=checkin.sleep_quality,
+        mood=checkin.mood,
+        anxiety=reported_severity("Anxiety", checkin.anxiety),
+        fatigue=reported_severity("Fatigue", checkin.fatigue),
+        nausea=reported_severity("Nausea", checkin.nausea),
+        pain=reported_severity("Pain", checkin.pain),
+        new_symptoms=checkin.new_symptoms,
         active_symptoms=active_symptoms,
         history_note=summary,
     )

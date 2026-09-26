@@ -57,6 +57,13 @@ def update_patient_twin(
     current_week: Optional[int] = None,
     status: Optional[TwinStatus] = None,
     overall_wellbeing: Optional[int] = None,
+    sleep_quality: Optional[int] = None,
+    mood: Optional[str] = None,
+    anxiety: Optional[int] = None,
+    fatigue: Optional[int] = None,
+    nausea: Optional[int] = None,
+    pain: Optional[int] = None,
+    new_symptoms: Optional[list[str]] = None,
     active_symptoms: Optional[list] = None,
     history_note: Optional[str] = None,
 ) -> PatientTwin:
@@ -75,6 +82,13 @@ def update_patient_twin(
         twin.status = status
     if overall_wellbeing is not None:
         twin.overall_wellbeing = overall_wellbeing
+    for name, value in (
+        ("sleep_quality", sleep_quality), ("mood", mood), ("anxiety", anxiety),
+        ("fatigue", fatigue), ("nausea", nausea), ("pain", pain),
+        ("new_symptoms", new_symptoms),
+    ):
+        if value is not None:
+            setattr(twin, name, value)
     if active_symptoms is not None:
         twin.active_symptoms = active_symptoms
 
@@ -92,3 +106,19 @@ def update_patient_twin(
 
     store.save_twin(twin)
     return twin
+
+
+def advance_patient_week(patient_id: str) -> PatientTwin:
+    """Move the demo clock forward without creating or changing a patient report."""
+    twin = store.get_twin(patient_id)
+    if twin is None:
+        raise ValueError(f"No twin found for patient_id={patient_id}")
+    if twin.current_week >= 4:
+        raise ValueError("The four-week demo is complete")
+    if not any(checkin.week == twin.current_week for checkin in store.list_checkins(patient_id)):
+        raise ValueError(f"Submit the Week {twin.current_week} check-in before continuing")
+    return update_patient_twin(
+        patient_id,
+        current_week=twin.current_week + 1,
+        history_note=f"Demo progressed to Week {twin.current_week + 1}; no check-in created.",
+    )

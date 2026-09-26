@@ -33,6 +33,13 @@ class PatientCheckIn:
     week: int
 
     overall_wellbeing: int  # 0-10 self-reported
+    sleep_quality: Optional[int] = None
+    mood: Optional[str] = None
+    anxiety: Optional[int] = None
+    fatigue: Optional[int] = None
+    nausea: Optional[int] = None
+    pain: Optional[int] = None
+    new_symptoms: list[str] = field(default_factory=list)
     symptoms: list[SymptomEntry] = field(default_factory=list)
     free_text: Optional[str] = None  # anything else the patient wants to say
 
@@ -44,6 +51,13 @@ class PatientCheckIn:
             "patient_id": self.patient_id,
             "week": self.week,
             "overall_wellbeing": self.overall_wellbeing,
+            "sleep_quality": self.sleep_quality,
+            "mood": self.mood,
+            "anxiety": self.anxiety,
+            "fatigue": self.fatigue,
+            "nausea": self.nausea,
+            "pain": self.pain,
+            "new_symptoms": self.new_symptoms,
             "symptoms": [s.__dict__ for s in self.symptoms],
             "free_text": self.free_text,
             "submitted_at": self.submitted_at,

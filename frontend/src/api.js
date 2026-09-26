@@ -32,6 +32,8 @@ export const api = {
 
   getTimeline: (patientId) => request(`/patients/${patientId}/timeline`),
 
+  advanceWeek: (patientId) => request(`/patients/${patientId}/advance-week`, { method: 'POST' }),
+
   askAssistant: (patientId, question) =>
     request(`/patients/${patientId}/assistant`, {
       method: 'POST',

@@ -56,6 +56,13 @@ class PatientTwin:
     # Each entry: {"name": str, "severity": int, "notes": str | None}
     active_symptoms: list[dict] = field(default_factory=list)
     overall_wellbeing: Optional[int] = None  # 0-10 self-reported, most recent
+    sleep_quality: Optional[int] = None
+    mood: Optional[str] = None
+    anxiety: Optional[int] = None
+    fatigue: Optional[int] = None
+    nausea: Optional[int] = None
+    pain: Optional[int] = None
+    new_symptoms: list[str] = field(default_factory=list)
 
     # Simple longitudinal trace so the timeline/UI has something to show.
     # Each entry: {"week": int, "status": TwinStatus, "summary": str, "at": iso str}
@@ -73,6 +80,13 @@ class PatientTwin:
             "synthetic_baseline": self.synthetic_baseline,
             "active_symptoms": self.active_symptoms,
             "overall_wellbeing": self.overall_wellbeing,
+            "sleep_quality": self.sleep_quality,
+            "mood": self.mood,
+            "anxiety": self.anxiety,
+            "fatigue": self.fatigue,
+            "nausea": self.nausea,
+            "pain": self.pain,
+            "new_symptoms": self.new_symptoms,
             "history": self.history,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
