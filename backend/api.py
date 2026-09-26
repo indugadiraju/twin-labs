@@ -8,13 +8,15 @@ Run: uvicorn backend.api:app --reload --port 8000
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from backend.data import researcher_store, store
 from backend.data.trial_docs import TRIAL_ID
-from backend.services import checkin_service, researcher_service, timeline_service, trial_assistant, twin_service
+from backend.services import checkin_service, counterfactual_service, researcher_service, timeline_service, trial_assistant, twin_service
 
 app = FastAPI(title="TwinLabs — Patient API (demo)")
 
@@ -62,6 +64,16 @@ class LabUpdateRequest(BaseModel):
     name: str = "kidney_function"
     value: float
     unit: str | None = None
+
+
+class CounterfactualChange(BaseModel):
+    variable: Literal["dose_pct"]  # V1: dose only
+    value: float = Field(ge=50, le=150)
+
+
+class CounterfactualRequest(BaseModel):
+    change: CounterfactualChange
+    weeks: int = Field(default=4, ge=1, le=12)
 
 
 # ---------- patient twin ----------
@@ -164,6 +176,18 @@ def add_researcher_lab(patient_id: str, req: LabUpdateRequest):
 @app.get("/api/researcher/cohort-summary")
 def get_researcher_cohort_summary():
     return researcher_service.get_cohort_summary()
+
+
+# ---------- What-If Studio (counterfactual) ----------
+
+@app.post("/api/patients/{patient_id}/counterfactual")
+def run_counterfactual(patient_id: str, req: CounterfactualRequest):
+    try:
+        return counterfactual_service.simulate_counterfactual(patient_id, req.change.model_dump(), weeks=req.weeks)
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # ---------- Trial Assistant ----------

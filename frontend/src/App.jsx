@@ -4,14 +4,17 @@ import CheckInForm from './components/CheckInForm'
 import JourneyTimeline from './components/JourneyTimeline'
 import PatientBaseline from './components/PatientBaseline'
 import ResearcherDashboard from './components/ResearcherDashboard'
+import ResearcherShell from './components/ResearcherShell'
 import TrialAssistant from './components/TrialAssistant'
 import TwinFlow from './components/TwinFlow'
+import TwinExplorer from './components/TwinExplorer'
 import TwinSnapshot from './components/TwinSnapshot'
+import WhatIfStudio from './components/WhatIfStudio'
 import './App.css'
 import './tabbed.css'
 
 const PATIENT_ID = 'pt_demo_patient'
-const tabs = ['Overview', 'My Twin', 'Check-In', 'Journey', 'Trial Assistant']
+const tabs = ['Overview', 'My Twin', 'What-If Studio', 'Check-In', 'Journey', 'Trial Assistant']
 const labels = { stable: 'Stable', watch: 'Watch', needs_attention: 'Needs attention' }
 const comparisonFields = [['Fatigue', 'fatigue'], ['Sleep', 'sleep_quality'], ['Mood', 'mood'], ['Nausea', 'nausea']]
 
@@ -25,6 +28,7 @@ export default function App() {
   const [mode, setMode] = useState('patient')
   const [tab, setTab] = useState('Overview')
   const [advancing, setAdvancing] = useState(false)
+  const [researchSection, setResearchSection] = useState('dashboard')
 
   useEffect(() => {
     async function start() {
@@ -69,7 +73,14 @@ export default function App() {
   const changes = comparisonFields.map(([name, key]) => ({ name, from: update?.previous?.[key] ?? previous?.[key], to: twin?.[key] })).filter((item) => item.to != null && item.from != null && item.from !== item.to)
   const value = (number) => typeof number === 'number' ? `${number}/10` : number
 
-  if (mode === 'researcher') return <ResearcherDashboard patientId={PATIENT_ID} onPatientView={() => setMode('patient')} />
+  // Twin views share one engine/visualization; each is mounted only while visible (one SVG twin in the DOM at a time).
+  const twinProps = { patientId: PATIENT_ID, twin, timeline, refreshKey: twin?.updated_at }
+  const researchSections = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'twin', label: 'Patient Twin', kicker: 'PARTICIPANT DIGITAL TWIN', title: 'Patient', em: 'Twin.', description: 'Current state, changing signals and the projected four-week trajectory for this participant.', content: loading ? null : <TwinExplorer {...twinProps} audience="researcher" /> },
+    { id: 'studio', label: 'What-If Studio', kicker: 'COUNTERFACTUAL SIMULATION', title: 'What-If', em: 'Studio.', description: "Explore how changes to treatment variables alter this patient's simulated trajectory.", content: loading ? null : <WhatIfStudio {...twinProps} patientName="Maya" audience="researcher" /> },
+  ]
+  if (mode === 'researcher') return <ResearcherDashboard patientId={PATIENT_ID} onPatientView={() => setMode('patient')} sections={researchSections} section={researchSection} onSection={setResearchSection} />
   return <div className="site-shell">
     <div className="hero-wrap">
       <nav className="topbar page-width" aria-label="Main navigation"><button className="wordmark brand-button" onClick={() => { setMode('patient'); setTab('Overview') }}><span className="brand-mark">✳</span> TwinLabs<span className="wordmark-dot">.</span></button><div className="topbar-right"><div className="mode-switch" role="group" aria-label="View mode"><button className={mode === 'patient' ? 'mode-active' : ''} aria-pressed={mode === 'patient'} onClick={() => setMode('patient')}>Patient View</button><button className={mode === 'researcher' ? 'mode-active' : ''} aria-pressed={mode === 'researcher'} onClick={() => setMode('researcher')}>Researcher View</button></div><span className="avatar" aria-label="Demo patient Maya">M</span></div></nav>
@@ -79,7 +90,8 @@ export default function App() {
       {tab === 'Overview' && <section className="overview-content page-width tab-enter"><div className="overview-summary"><div><span>CURRENT WEEK</span><strong>{String(currentWeek).padStart(2, '0')} <small>/ 04</small></strong></div><div><span>TWIN STATUS</span><strong><i className={`status-dot ${twin?.status || 'stable'}`} />{labels[twin?.status] || 'Loading'}</strong></div><div><span>NEXT MILESTONE</span><strong>{nextMilestone}</strong></div></div><div className="overview-grid"><div className="overview-story"><p className="eyebrow eyebrow-dark">YOUR DIGITAL TWIN</p><h2>Small changes.<br /><em>A clearer picture.</em></h2><p>{latest ? `Your latest simulated check-in was recorded in Week ${latest.week}. Explore how your twin has changed.` : 'Your first check-in will give your twin a clearer view of how you feel.'}</p><button onClick={() => setTab('My Twin')}>Meet your twin <span>↗</span></button></div><div className="overview-changes"><span className="eyebrow eyebrow-dark">LATEST CHANGES · SIMULATED REPORTS</span>{changes.length ? changes.slice(0,4).map((item) => <div key={item.name}><span>{item.name}</span><strong>{value(item.from)} → {value(item.to)}</strong></div>) : <p>{latest ? 'No tracked differences from the previous report yet.' : 'Your changes will appear after your first check-in.'}</p>}<button onClick={() => setTab('Check-In')}>{currentReport ? 'View check-in' : 'Start check-in'} ↗</button></div></div><div className="overview-trust"><span>REAL PUBLIC TRIAL · {timeline?.trial?.short_name || 'TAILORx'} · {timeline?.trial?.nct_id || 'NCT00310180'}</span><span>SYNTHETIC PATIENT · SIMULATED WEEKLY JOURNEY</span></div></section>}
       {error && <div className="error-banner page-width" role="alert">{error} <button onClick={() => window.location.reload()}>Try again</button></div>}
       {loading ? <div className="loading-state page-width" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-panel" /></div> : <>
-        <div hidden={tab !== 'My Twin'} className="tab-stage tab-enter"><TwinSnapshot twin={twin} checkin={currentReport} update={update}/><PatientBaseline baseline={twin?.synthetic_baseline}/></div>
+        <div hidden={tab !== 'My Twin'} className="tab-stage tab-enter">{tab === 'My Twin' && <TwinExplorer {...twinProps} audience="patient" />}<TwinSnapshot twin={twin} checkin={currentReport} update={update}/><PatientBaseline baseline={twin?.synthetic_baseline}/></div>
+        {tab === 'What-If Studio' && <div className="tab-stage tab-enter"><WhatIfStudio {...twinProps} patientName="Maya" audience="patient" /></div>}
         <div hidden={tab !== 'Check-In'} className="tab-stage tab-enter"><section className="care-section" id="check-in"><div className="page-width care-grid"><div className="care-intro"><p className="eyebrow">A MOMENT TO CHECK IN</p><h2>Every detail<br /><em>matters.</em></h2><p>Your weekly check-in helps your twin reflect how you feel between visits.</p><div className="care-decoration" aria-hidden="true">✳</div></div><CheckInForm key={currentWeek} patientId={PATIENT_ID} currentWeek={currentWeek} existingCheckin={currentReport} onSubmitted={onSubmitted} update={update} onAdvance={advanceWeek} advancing={advancing}/></div></section></div>
         <div hidden={tab !== 'Journey'} className="tab-stage tab-enter"><JourneyTimeline key={currentWeek} timeline={timeline} baseline={twin?.synthetic_baseline} onRefresh={refresh}/></div>
         <div hidden={tab !== 'Trial Assistant'} className="tab-stage tab-enter"><TrialAssistant patientId={PATIENT_ID} currentWeek={currentWeek}/></div>
