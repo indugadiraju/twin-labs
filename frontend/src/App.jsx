@@ -3,6 +3,7 @@ import { api } from './api'
 import CheckInForm from './components/CheckInForm'
 import JourneyTimeline from './components/JourneyTimeline'
 import PatientBaseline from './components/PatientBaseline'
+import PatientTrialPortfolio from './components/PatientTrialPortfolio'
 import ResearcherDashboard from './components/ResearcherDashboard'
 import PortalLogin from './components/PortalLogin'
 import TrialAssistant from './components/TrialAssistant'
@@ -14,7 +15,7 @@ import './App.css'
 import './tabbed.css'
 
 const PATIENT_ID = 'pt_demo_patient'
-const tabs = ['Overview', 'My Twin', 'What-If Studio', 'Check-In', 'Journey', 'Trial Assistant']
+const tabs = ['Overview', 'My Trials', 'My Twin', 'What-If Studio', 'Check-In', 'Journey', 'Trial Assistant']
 const labels = { stable: 'Stable', watch: 'Watch', needs_attention: 'Needs attention' }
 const comparisonFields = [['Fatigue', 'fatigue'], ['Sleep', 'sleep_quality'], ['Mood', 'mood'], ['Nausea', 'nausea']]
 
@@ -94,6 +95,7 @@ export default function App() {
       {tab === 'Overview' && <section className="overview-content page-width tab-enter"><div className="overview-summary"><div><span>CURRENT WEEK</span><strong>{String(currentWeek).padStart(2, '0')} <small>/ 04</small></strong></div><div><span>TWIN STATUS</span><strong><i className={`status-dot ${twin?.status || 'stable'}`} />{labels[twin?.status] || 'Loading'}</strong></div><div><span>NEXT MILESTONE</span><strong>{nextMilestone}</strong></div></div><div className="overview-grid"><div className="overview-story"><p className="eyebrow eyebrow-dark">YOUR DIGITAL TWIN</p><h2>Small changes.<br /><em>A clearer picture.</em></h2><p>{latest ? `Your latest simulated check-in was recorded in Week ${latest.week}. Explore how your twin has changed.` : 'Your first check-in will give your twin a clearer view of how you feel.'}</p><button onClick={() => setTab('My Twin')}>Meet your twin <span>↗</span></button></div><div className="overview-changes"><span className="eyebrow eyebrow-dark">LATEST CHANGES · SIMULATED REPORTS</span>{changes.length ? changes.slice(0,4).map((item) => <div key={item.name}><span>{item.name}</span><strong>{value(item.from)} → {value(item.to)}</strong></div>) : <p>{latest ? 'No tracked differences from the previous report yet.' : 'Your changes will appear after your first check-in.'}</p>}<button onClick={() => setTab('Check-In')}>{currentReport ? 'View check-in' : 'Start check-in'} ↗</button></div></div><div className="overview-trust"><span>REAL PUBLIC TRIAL · {timeline?.trial?.short_name || 'TAILORx'} · {timeline?.trial?.nct_id || 'NCT00310180'}</span><span>SYNTHETIC PATIENT · SIMULATED WEEKLY JOURNEY</span></div></section>}
       {error && <div className="error-banner page-width" role="alert">{error} <button onClick={() => window.location.reload()}>Try again</button></div>}
       {loading ? <div className="loading-state page-width" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-panel" /></div> : <>
+        <div hidden={tab !== 'My Trials'} className="tab-stage tab-enter"><PatientTrialPortfolio timeline={timeline}/></div>
         <div hidden={tab !== 'My Twin'} className="tab-stage tab-enter">{tab === 'My Twin' && <TwinExplorer {...twinProps} audience="patient" />}<TwinSnapshot twin={twin} checkin={currentReport} update={update}/><PatientBaseline baseline={twin?.synthetic_baseline}/></div>
         {tab === 'What-If Studio' && <div className="tab-stage tab-enter"><WhatIfStudio {...twinProps} patientName="Maya" audience="patient" /></div>}
         <div hidden={tab !== 'Check-In'} className="tab-stage tab-enter"><section className="care-section" id="check-in"><div className="page-width care-grid"><div className="care-intro"><p className="eyebrow">A MOMENT TO CHECK IN</p><h2>Every detail<br /><em>matters.</em></h2><p>Your weekly check-in helps your twin reflect how you feel between visits.</p><div className="care-decoration" aria-hidden="true">✳</div></div><CheckInForm key={currentWeek} patientId={PATIENT_ID} currentWeek={currentWeek} existingCheckin={currentReport} onSubmitted={onSubmitted} update={update} onAdvance={advanceWeek} advancing={advancing}/></div></section></div>
