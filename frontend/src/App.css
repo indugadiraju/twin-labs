@@ -399,3 +399,9 @@
 /* The patient stylesheet styles inputs inside .site-shell; keep them purple inside the studio. */
 .studio-view .checkin-panel.studio-controls .plain-input { background:rgba(255,255,255,.06); border-color:rgba(203,169,233,.3); color:white; }
 .studio-view .checkin-panel.studio-controls .studio-patient { color:white; }
+.dose-lines { display:flex; flex-direction:column; align-items:end; gap:6px; min-width:0; max-width:100%; text-align:right; overflow-wrap:anywhere; }
+.studio-context dd { min-width:0; }
+.dose-lines>span { display:flex; flex-direction:column; align-items:end; }
+.dose-lines b { font-weight:700; }
+.dose-lines>span>span { font-weight:500; opacity:.85; }
+.dose-lines small { font-size:11px; font-weight:500; opacity:.7; }

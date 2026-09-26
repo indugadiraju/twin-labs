@@ -23,7 +23,7 @@ export default function TrajectoryProgression({ original, modified, mode, week, 
 
   if (!original.length) return null
   const patient = audience === 'patient'
-  const labels = patient ? ['Current plan', 'Scenario'] : ['Original', 'Modified']
+  const labels = patient ? ['Current treatment', 'Scenario'] : ['Original', 'Modified']
   const series = mode === 'original' ? [['original', original]] : mode === 'modified' ? [['modified', modified]] : [['original', original], ['modified', modified]]
   const shown = mode === 'original' ? original : modified
 

@@ -21,14 +21,30 @@ export const ANCHORS = {
   armL: [214, 258, 12, -0.4, 1], forearmR: [396, 344, 12, 0.4, 1], handL: [186, 426, 8, -0.6, 1], handR: [414, 426, 8, 0.6, 1], footL: [258, 648, 34, 0, 1], footR: [342, 648, 34, 0, 1],
 }
 
+// Display only: tidy a free-text dose (units, superscripts, spacing, "x4" → "× 4").
+export const formatDose = (dose = '') => String(dose)
+  .replace(/\^2/g, '²').replace(/\^3/g, '³')
+  .replace(/(\d)(mg|mcg|g|mL|ml|IU)\b/g, '$1 $2')
+  .replace(/\bx\s?(\d+)\b/g, '× $1')
+  .replace(/\s+/g, ' ').trim()
+
+// Split a dose into [{ name, amount }] per drug plus a schedule line, for multi-line display.
+export function doseParts(dose) {
+  const parts = formatDose(dose).split(/\s*\+\s*/)
+  const [lastDrug, ...schedule] = parts.pop().split(/,\s*/)
+  const drugs = [...parts, lastDrug].map((d) => { const i = d.search(/\d/); return i > 0 ? { name: d.slice(0, i).trim(), amount: d.slice(i).trim() } : { name: '', amount: d } })
+  return { drugs, schedule: schedule.join(' · ') }
+}
+
 export const STATUS = { stable: 'Stable', watch: 'Watch', needs_attention: 'Needs attention' }
-const t10 = (v) => Number(v).toFixed(1)
+// Display only: one decimal at most, no trailing ".0" (5.0 → 5, 4.25 → 4.3).
+const t10 = (v) => String(Number(Number(v).toFixed(1)))
 const pct = (v) => `${Math.round(v * 100)}%`
 
 // Outcome metrics shared by the twin pages and the What-If Studio.
 export const METRICS = [
   { key: 'risk_score', format: pct, delta: (d) => `${Math.round(d * 100)} pts`, label: { researcher: 'Risk', patient: 'Simulated symptom burden' }, note: { researcher: 'Mock risk score', patient: 'Overall simulated symptom load' } },
-  { key: 'response_score', format: pct, delta: (d) => `${Math.round(d * 100)} pts`, label: { researcher: 'Response', patient: 'Simulated treatment response' }, note: { researcher: 'Response proxy', patient: 'How strongly the model expects treatment to work' } },
+  { key: 'response_score', format: pct, delta: (d) => `${Math.round(d * 100)} pts`, label: { researcher: 'Predicted response', patient: 'Predicted treatment response' }, note: { researcher: 'Response proxy', patient: 'How strongly the model expects treatment to work' } },
   { key: 'fatigue', format: t10, delta: t10, label: { researcher: 'Fatigue', patient: 'Tiredness' }, note: { researcher: 'Projected / 10', patient: 'Out of 10' } },
   { key: 'nausea', format: t10, delta: t10, label: { researcher: 'Nausea', patient: 'Nausea' }, note: { researcher: 'Projected / 10', patient: 'Out of 10' } },
   { key: 'pain', format: t10, delta: t10, label: { researcher: 'Pain', patient: 'Pain' }, note: { researcher: 'Projected / 10', patient: 'Out of 10' } },
@@ -52,8 +68,8 @@ const COPY = {
     kidneyNote: 'Used for exposure in the heuristic', painNote: 'Location not reported', riskSource: 'Mock trajectory + heuristic effect',
   },
   patient: {
-    status: 'Twin status', dose: 'Simulated treatment exposure', regimen: 'Your treatment', kidney: 'Kidney function', nausea: 'Nausea', fatigue: 'Tiredness',
-    pain: 'Pain', response: 'Simulated treatment response', risk: 'Simulated symptom burden', wellbeing: 'How you may feel', uncertainty: 'Forecast uncertainty',
+    status: 'Twin status', dose: 'Treatment dose', regimen: 'Current treatment', kidney: 'Kidney function', nausea: 'Nausea', fatigue: 'Tiredness',
+    pain: 'Pain', response: 'Predicted treatment response', risk: 'Simulated symptom burden', wellbeing: 'How you may feel', uncertainty: 'Forecast uncertainty',
     sim: 'Simulated for this demo', base: 'From your synthetic starting profile', reported: 'From your latest check-in',
     kidneyNote: 'A baseline lab value', painNote: 'Where you feel it isn’t recorded', riskSource: 'Simulated for this demo',
   },
@@ -90,7 +106,7 @@ export function buildLens(lens, { twin, cur, other, otherLabel, original, modifi
 
   const c = {
     status: { id: 'status', anchor: ANCHORS.sternum, label: t.status, value: STATUS[cur.status], compare: other && other.status !== cur.status ? `${otherLabel} ${STATUS[other.status]}` : null, level: 0, tone: 'info', source: audience === 'patient' ? 'A simple demo indicator, not a diagnosis' : 'Check-in thresholds applied to the projection' },
-    dose: { id: 'dose', anchor: ANCHORS.chest, label: t.dose, value: comparing ? `100% → ${dose}%` : `${shownDose}%`, compare: doseCompare, level: shownDose / 150, ghost: comparing ? 100 / 150 : undefined, tone: 'info', source: b.dose },
+    dose: { id: 'dose', anchor: ANCHORS.chest, label: t.dose, value: comparing ? `100% → ${dose}%` : `${shownDose}%`, compare: doseCompare, level: shownDose / 150, ghost: comparing ? 100 / 150 : undefined, tone: 'info', source: formatDose(b.dose) },
     regimen: { id: 'regimen', anchor: ANCHORS.sternum, label: t.regimen, value: (b.treatment || '—').split(' (')[0], note: (b.treatment || '').match(/\(([^)]+)\)/)?.[1], level: 0.3, tone: 'info', source: t.base },
     kidney: { id: 'kidney', anchor: ANCHORS.kidneyR, label: t.kidney, value: `${egfr ?? '—'} eGFR`, note: t.kidneyNote, level: 0.35, tone: 'lab', source: t.base },
     nausea: { id: 'nausea', anchor: ANCHORS.abdomen, label: t.nausea, ...metric('nausea', tenOf, per10), tone: 'symptom', source: t.sim },
