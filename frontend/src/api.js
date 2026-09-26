@@ -34,6 +34,20 @@ export const api = {
 
   advanceWeek: (patientId) => request(`/patients/${patientId}/advance-week`, { method: 'POST' }),
 
+  getResearcherPatients: () => request('/researcher/patients'),
+
+  getResearcherJourney: (patientId) => request(`/researcher/patients/${patientId}/journey`),
+
+  getResearcherSummary: (patientId) => request(`/researcher/patients/${patientId}/summary`),
+
+  getCohortSummary: () => request('/researcher/cohort-summary'),
+
+  addLabUpdate: (patientId, lab) =>
+    request(`/researcher/patients/${patientId}/labs`, {
+      method: 'POST',
+      body: JSON.stringify(lab),
+    }),
+
   askAssistant: (patientId, question) =>
     request(`/patients/${patientId}/assistant`, {
       method: 'POST',

@@ -3,7 +3,7 @@ import { api } from './api'
 import CheckInForm from './components/CheckInForm'
 import JourneyTimeline from './components/JourneyTimeline'
 import PatientBaseline from './components/PatientBaseline'
-import ResearcherShell from './components/ResearcherShell'
+import ResearcherDashboard from './components/ResearcherDashboard'
 import TrialAssistant from './components/TrialAssistant'
 import TwinFlow from './components/TwinFlow'
 import TwinSnapshot from './components/TwinSnapshot'
@@ -69,6 +69,7 @@ export default function App() {
   const changes = comparisonFields.map(([name, key]) => ({ name, from: update?.previous?.[key] ?? previous?.[key], to: twin?.[key] })).filter((item) => item.to != null && item.from != null && item.from !== item.to)
   const value = (number) => typeof number === 'number' ? `${number}/10` : number
 
+  if (mode === 'researcher') return <ResearcherDashboard patientId={PATIENT_ID} onPatientView={() => setMode('patient')} />
   return <div className="site-shell">
     <div className="hero-wrap">
       <nav className="topbar page-width" aria-label="Main navigation"><button className="wordmark brand-button" onClick={() => { setMode('patient'); setTab('Overview') }}><span className="brand-mark">✳</span> TwinLabs<span className="wordmark-dot">.</span></button><div className="topbar-right"><div className="mode-switch" role="group" aria-label="View mode"><button className={mode === 'patient' ? 'mode-active' : ''} aria-pressed={mode === 'patient'} onClick={() => setMode('patient')}>Patient View</button><button className={mode === 'researcher' ? 'mode-active' : ''} aria-pressed={mode === 'researcher'} onClick={() => setMode('researcher')}>Researcher View</button></div><span className="avatar" aria-label="Demo patient Maya">M</span></div></nav>

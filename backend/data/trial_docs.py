@@ -165,7 +165,7 @@ STUDY_TEAM_CONTACT = {
         "make treatment decisions or give medical advice."
     ),
     "phone": "(555) 010-2025",
-    "email": "studyteam@twinlab-demo-trial.example",
+    "email": "studyteam@twinlabs-demo-trial.example",
     "is_demo_placeholder": True,
 }
 
