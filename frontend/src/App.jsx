@@ -85,7 +85,7 @@ export default function App() {
         <div hidden={tab !== 'Trial Assistant'} className="tab-stage tab-enter"><TrialAssistant patientId={PATIENT_ID} currentWeek={currentWeek}/></div>
       </>}
     </main></div>
-    <div hidden={mode !== 'researcher'}><ResearcherShell timeline={timeline} twin={twin}/></div>
+    <div hidden={mode !== 'researcher'}><ResearcherDashboard patientId={PATIENT_ID} onPatientView={() => setMode('patient')} /></div>
     <footer className="footer page-width"><span className="wordmark">✳ TwinLabs.</span><p>Demo patient data is synthetic. Check-ins are simulated. Trial facts come from the public TAILORx record. Weekly visits are simulated. Predictions are mock outputs, not clinical guidance.</p><span>DESIGNED FOR THE PATIENT JOURNEY</span></footer>
   </div>
 }
