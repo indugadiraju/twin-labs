@@ -1,5 +1,5 @@
 """
-Minimal FastAPI wiring for Samhita's portion of TwinLab:
+Minimal FastAPI wiring for Samhita's portion of TwinLabs:
 patient twin state, weekly check-ins, Week 1-4 timeline, and the
 patient-facing Trial Assistant.
 
@@ -17,7 +17,7 @@ from backend.data.trial_docs import TRIAL_ID
 from backend.data.condition_configs import DEFAULT_CONDITION
 from backend.services import checkin_service, researcher_service, timeline_service, trial_assistant, twin_service
 
-app = FastAPI(title="TwinLab — Patient API (demo)")
+app = FastAPI(title="TwinLabs — Patient API (demo)")
 
 app.add_middleware(
     CORSMiddleware,

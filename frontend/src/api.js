@@ -1,4 +1,4 @@
-// Thin client for Samhita's TwinLab patient-facing API.
+// Thin client for Samhita's TwinLabs patient-facing API.
 // Talks to the FastAPI backend (see backend/api.py), proxied at /api in dev.
 
 const BASE = '/api'
