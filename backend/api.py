@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from backend.data import researcher_store, store
 from backend.data.trial_docs import TRIAL_ID
+from backend.data.condition_configs import DEFAULT_CONDITION
 from backend.services import checkin_service, researcher_service, timeline_service, trial_assistant, twin_service
 
 app = FastAPI(title="TwinLab — Patient API (demo)")
@@ -31,6 +32,7 @@ app.add_middleware(
 class CreateTwinRequest(BaseModel):
     patient_id: str | None = None
     trial_id: str = TRIAL_ID
+    condition: str = DEFAULT_CONDITION
 
 
 class SymptomIn(BaseModel):
@@ -68,7 +70,10 @@ class LabUpdateRequest(BaseModel):
 
 @app.post("/api/patients/twin")
 def create_twin(req: CreateTwinRequest):
-    twin = twin_service.create_patient_twin(trial_id=req.trial_id, patient_id=req.patient_id)
+    try:
+        twin = twin_service.create_patient_twin(trial_id=req.trial_id, patient_id=req.patient_id, condition=req.condition)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return twin.to_dict()
 
 

@@ -14,3 +14,7 @@
 
 @keyframes flowBloom { 35% { filter:drop-shadow(0 0 55px rgba(246,174,252,.56)); } 100% { filter:drop-shadow(0 30px 60px rgba(179,108,228,.17)); } }
 @media(prefers-reduced-motion:reduce) { .twin-flow-active { animation:none!important; } }
+
+.demo-labs { margin-top: 1.2rem; padding: 1rem 0; border-top: 1px solid rgba(255,255,255,.16); font-size: .86rem; line-height: 1.8; }
+.demo-labs .eyebrow { display: block; margin-bottom: .35rem; }
+.demo-note { font-size: .86rem; opacity: .72; line-height: 1.5; }

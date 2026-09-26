@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from backend.data import store
 from backend.data.mock_predictions import mock_predicted_trajectory
+from backend.data.synthetic_longitudinal_data import synthetic_weekly_states
 from backend.data.trial_docs import REAL_TRIAL, get_visit
 
 
@@ -27,8 +28,13 @@ def get_patient_journey(patient_id: str, weeks: int = 4) -> dict:
     if twin is None:
         raise ValueError(f"No twin found for patient_id={patient_id}")
 
+    weeks = max(1, min(4, weeks))
     checkins_by_week = {c.week: c for c in store.list_checkins(patient_id)}
-    predictions_by_week = {p["week"]: p for p in mock_predicted_trajectory(patient_id, weeks)}
+    demo_states = synthetic_weekly_states(patient_id, twin.synthetic_baseline)
+    observed_states = {week: checkin.to_dict() for week, checkin in checkins_by_week.items()}
+    predictions_by_week = {p["week"]: p for p in mock_predicted_trajectory(
+        patient_id, weeks, baseline=twin.synthetic_baseline, observed_states=observed_states
+    )}
 
     timeline = []
     for week in range(1, weeks + 1):
@@ -41,6 +47,7 @@ def get_patient_journey(patient_id: str, weeks: int = 4) -> dict:
                 "week": week,
                 "visit": visit,
                 "checkin": checkin.to_dict() if checkin else None,
+                "synthetic_state": demo_states[week],
                 "prediction": prediction,
             }
         )
@@ -61,11 +68,14 @@ def get_patient_journey(patient_id: str, weeks: int = 4) -> dict:
             "source_url": REAL_TRIAL["source"]["url"],
         },
         "weeks": timeline,
+        "synthetic_baseline_state": demo_states[0],
         # Explicit provenance so the UI can label every section correctly.
         "data_sources": {
             "trial_info": "real (TAILORx, NCT00310180, ClinicalTrials.gov)",
             "visit_schedule": "simulated_for_demo",
             "patient_baseline": "synthetic",
+            "weekly_states": "synthetic_predefined_demo_not_submitted_checkins",
+            "labs": "synthetic",
             "checkins": "patient_reported_simulated",
             "predictions": "mock",
         },
