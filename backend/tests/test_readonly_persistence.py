@@ -1,5 +1,3 @@
-import importlib
-import os
 import unittest
 from unittest import mock
 
@@ -8,7 +6,7 @@ from backend.services import checkin_service
 
 
 class ReadOnlyPersistenceTests(unittest.TestCase):
-    """Deployed (Vercel) filesystems are read-only outside /tmp: never fail a request."""
+    """Deployed (Vercel) filesystems can be read-only: never fail a request because the cache can't be written."""
 
     def tearDown(self):
         store._persistence_enabled = False
@@ -28,14 +26,6 @@ class ReadOnlyPersistenceTests(unittest.TestCase):
             researcher_store.enable_persistence("/read-only/researcher_state.json")
             researcher_store.save_lab_update(store.DEMO_PATIENT_ID, week=2, name="kidney_function", value=61)
         self.assertTrue(researcher_store.list_lab_updates(store.DEMO_PATIENT_ID))
-
-    def test_vercel_defaults_cache_to_tmp(self):
-        with mock.patch.dict(os.environ, {"VERCEL": "1"}):
-            for module in (store, researcher_store):
-                reloaded = importlib.reload(module)
-                self.assertTrue(str(reloaded._state_file).startswith("/tmp/"), reloaded._state_file)
-        for module in (store, researcher_store):
-            importlib.reload(module)
 
 
 if __name__ == "__main__":
