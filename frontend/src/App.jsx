@@ -3,6 +3,7 @@ import { api } from './api'
 import CheckInForm from './components/CheckInForm'
 import JourneyTimeline from './components/JourneyTimeline'
 import PatientBaseline from './components/PatientBaseline'
+import PatientTrialPortfolio from './components/PatientTrialPortfolio'
 import ResearcherDashboard from './components/ResearcherDashboard'
 import PortalLogin from './components/PortalLogin'
 import TrialAssistant from './components/TrialAssistant'
@@ -12,7 +13,7 @@ import './App.css'
 import './tabbed.css'
 
 const PATIENT_ID = 'pt_demo_patient'
-const tabs = ['Overview', 'My Twin', 'Check-In', 'Journey', 'Trial Assistant']
+const tabs = ['Overview', 'My Trials', 'My Twin', 'Check-In', 'Journey', 'Trial Assistant']
 const labels = { stable: 'Stable', watch: 'Watch', needs_attention: 'Needs attention' }
 const comparisonFields = [['Fatigue', 'fatigue'], ['Sleep', 'sleep_quality'], ['Mood', 'mood'], ['Nausea', 'nausea']]
 
@@ -84,6 +85,7 @@ export default function App() {
       {error && <div className="error-banner page-width" role="alert">{error} <button onClick={() => window.location.reload()}>Try again</button></div>}
       {loading ? <div className="loading-state page-width" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-panel" /></div> : <>
         <div hidden={tab !== 'My Twin'} className="tab-stage tab-enter"><TwinSnapshot twin={twin} checkin={currentReport} update={update}/><PatientBaseline baseline={twin?.synthetic_baseline}/></div>
+        <div hidden={tab !== 'My Trials'} className="tab-stage tab-enter"><PatientTrialPortfolio timeline={timeline}/></div>
         <div hidden={tab !== 'Check-In'} className="tab-stage tab-enter"><section className="care-section" id="check-in"><div className="page-width care-grid"><div className="care-intro"><p className="eyebrow">A MOMENT TO CHECK IN</p><h2>Every detail<br /><em>matters.</em></h2><p>Your weekly check-in helps your twin reflect how you feel between visits.</p><div className="care-decoration" aria-hidden="true">✳</div></div><CheckInForm key={currentWeek} patientId={PATIENT_ID} currentWeek={currentWeek} existingCheckin={currentReport} onSubmitted={onSubmitted} update={update} onAdvance={advanceWeek} advancing={advancing}/></div></section></div>
         <div hidden={tab !== 'Journey'} className="tab-stage tab-enter"><JourneyTimeline key={currentWeek} timeline={timeline} baseline={twin?.synthetic_baseline} onRefresh={refresh}/></div>
         <div hidden={tab !== 'Trial Assistant'} className="tab-stage tab-enter"><TrialAssistant patientId={PATIENT_ID} currentWeek={currentWeek}/></div>
