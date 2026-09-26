@@ -225,7 +225,8 @@ export default function ResearcherDashboard({ patientId, onExit, sections, secti
   }, { label: 'No active signal', key: '', color: '#7cf7ff', score: 0 })
 
   return <div className="researcher-command-shell">
-    <header className="researcher-header">
+    {/* Patient Twin / What-If Studio sections use the deep-purple studio theme. */}
+    <header className={`researcher-header ${extra ? 'researcher-header-studio' : ''}`}>
       <nav className="researcher-nav page-width" aria-label="Researcher navigation">
         <a className="wordmark researcher-wordmark" href="#researcher-top"><span>✳</span> TwinLabs<span className="wordmark-dot">.</span></a>
         <button type="button" className="researcher-exit" onClick={onExit}>Exit researcher portal</button>
