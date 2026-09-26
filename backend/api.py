@@ -8,6 +8,8 @@ Run: uvicorn backend.api:app --reload --port 8000
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -17,7 +19,15 @@ from backend.data.trial_docs import TRIAL_ID
 from backend.data.condition_configs import DEFAULT_CONDITION
 from backend.services import checkin_service, researcher_service, timeline_service, trial_assistant, twin_service
 
-app = FastAPI(title="TwinLabs — Patient API (demo)")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    store.enable_persistence()
+    researcher_store.enable_persistence()
+    yield
+
+
+app = FastAPI(title="TwinLabs — Patient API (demo)", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

@@ -206,6 +206,17 @@
   color: #82758d;
 }
 
+.researcher-command-shell .cohort-heading-actions p,
+.researcher-command-shell .cohort-heading-actions small {
+  color: #82758d;
+}
+
+.researcher-command-shell .cohort-heading-actions button {
+  border-color: rgba(123, 85, 199, .27);
+  color: #7047b6;
+  background: rgba(255, 255, 255, .58);
+}
+
 .researcher-command-shell .cohort-metrics,
 .researcher-command-shell .intelligence-summary {
   background: rgba(255, 255, 255, .7);
@@ -395,6 +406,17 @@
 
 .researcher-command-shell .lab-note {
   color: #82758d;
+}
+
+.researcher-command-shell .lab-fields label {
+  color: #81738c;
+}
+
+.researcher-command-shell .lab-fields input,
+.researcher-command-shell .lab-fields select {
+  border-color: rgba(84, 56, 116, .16);
+  color: #433152;
+  background: rgba(255, 255, 255, .76);
 }
 
 .researcher-command-shell .researcher-footer {

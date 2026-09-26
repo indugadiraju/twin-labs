@@ -33,7 +33,7 @@ function DigitalTwinCore({ journey }) {
       <i>{String(weekCount).padStart(2, '0')} forecast weeks</i>
     </div>
     <div className="twin-callout callout-left"><span>ACTIVE SIGNALS</span><strong>{String(alertCount).padStart(2, '0')}</strong></div>
-    <div className="twin-callout callout-right"><span>MODEL STATE</span><strong>LIVE</strong></div>
+    <div className="twin-callout callout-right"><span>MODEL STATE</span><strong>READY</strong></div>
     <div className="twin-scan" aria-hidden="true" />
   </div>
 }
@@ -115,16 +115,26 @@ export default function ResearcherDashboard({ patientId, onExit }) {
   const [selectedId, setSelectedId] = useState(patientId)
   const [journey, setJourney] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState(null)
   const [labStatus, setLabStatus] = useState('')
+  const [labDraft, setLabDraft] = useState({ week: 2, name: 'kidney_function', value: 61, unit: 'eGFR mL/min/1.73m²' })
   const [error, setError] = useState('')
 
   const loadJourney = async (id) => {
+    setError('')
     setSelectedId(id)
-    setJourney(await api.getResearcherJourney(id))
+    try {
+      setJourney(await api.getResearcherJourney(id))
+      setLastUpdated(new Date())
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
-  const loadDashboard = async () => {
-    setLoading(true)
+  const loadDashboard = async (showInitialLoader = false) => {
+    if (showInitialLoader) setLoading(true)
+    else setRefreshing(true)
     setError('')
     try {
       await api.createTwin(patientId)
@@ -139,10 +149,12 @@ export default function ResearcherDashboard({ patientId, onExit }) {
       setCohort(nextCohort)
       setPatients(nextPatients)
       await loadJourney(nextId)
+      setLastUpdated(new Date())
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -161,21 +173,23 @@ export default function ResearcherDashboard({ patientId, onExit }) {
         setPatients(nextPatients)
         setSelectedId(nextId)
         setJourney(nextJourney)
+        setLastUpdated(new Date())
       })
       .catch((err) => { if (!cancelled) setError(err.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [patientId])
 
-  const addDemoLab = async () => {
+  const addDemoLab = async (event) => {
+    event.preventDefault()
     setLabStatus('saving')
     setError('')
     try {
       const result = await api.addLabUpdate(selectedId, {
-        week: 2,
-        name: 'kidney_function',
-        value: 61,
-        unit: 'eGFR mL/min/1.73m²',
+        week: Number(labDraft.week),
+        name: labDraft.name,
+        value: Number(labDraft.value),
+        unit: labDraft.unit || null,
       })
       setJourney(result.journey)
       setLabStatus('saved')
@@ -185,6 +199,7 @@ export default function ResearcherDashboard({ patientId, onExit }) {
       ])
       setCohort(nextCohort)
       setPatients(patientResult.patients || [])
+      setLastUpdated(new Date())
     } catch (err) {
       setLabStatus('')
       setError(err.message)
@@ -192,8 +207,10 @@ export default function ResearcherDashboard({ patientId, onExit }) {
   }
 
   const latest = journey?.weeks?.at(-1)
+  const selectedPatient = patients.find((patient) => patient.patient_id === selectedId)
+  const cohortIsSynthetic = cohort?.is_synthetic_aggregate ?? cohort?.source === 'deterministic_synthetic_cohort_aggregate'
   const metrics = cohort ? [
-    ['01', 'Active patients', cohort.active_patients, 'in demo cohort'],
+    ['01', cohortIsSynthetic ? 'Simulated patients' : 'Active demo patients', cohort.active_patients, cohortIsSynthetic ? 'in synthetic cohort' : 'available now'],
     ['02', 'Worsening trajectories', cohort.worsening_symptom_trajectories, 'need a closer look'],
     ['03', 'Requires review', cohort.patients_requiring_review, 'researcher attention'],
     ['04', 'New symptoms', cohort.new_symptoms_reported, 'reported this cycle'],
@@ -213,7 +230,7 @@ export default function ResearcherDashboard({ patientId, onExit }) {
 
       <div className="researcher-hero page-width" id="researcher-top">
         <div className="researcher-hero-copy">
-          <div className="live-model-label"><span className="live-pulse" />DIGITAL TWIN NETWORK · LIVE</div>
+          <div className="live-model-label"><span className="live-pulse" />DIGITAL TWIN NETWORK · DEMO</div>
           <h1>See the signal<br /><em>before it becomes risk.</em></h1>
           <p>Longitudinal patient intelligence, transparent forecasts, and actionable cohort signals—synchronized in one researcher command center.</p>
           <div className="hero-readouts">
@@ -226,17 +243,17 @@ export default function ResearcherDashboard({ patientId, onExit }) {
       </div>
 
       <div className="signal-rail" aria-hidden="true">
-        <div><span>COHORT STREAM ONLINE</span><b>✳</b><span>PATIENT-REPORTED SIGNALS</span><b>✳</b><span>4-WEEK RISK FORECAST</span><b>✳</b><span>TRANSPARENT ATTRIBUTION</span></div>
+        <div><span>SIMULATED COHORT DATA</span><b>✳</b><span>PATIENT-REPORTED SIGNALS</span><b>✳</b><span>4-WEEK RISK FORECAST</span><b>✳</b><span>TRANSPARENT ATTRIBUTION</span></div>
       </div>
     </header>
 
     <main className="researcher-main page-width">
-      {error && <div className="researcher-error" role="alert">{error}<button type="button" onClick={loadDashboard}>Try again</button></div>}
+      {error && <div className="researcher-error" role="alert">{error}<button type="button" onClick={() => loadDashboard(true)}>Try again</button></div>}
       {loading ? <div className="researcher-loading" role="status"><div /><div /><div /></div> : <>
         <section className="cohort-overview" aria-labelledby="cohort-title">
           <div className="researcher-section-heading">
-            <div><p className="researcher-kicker">01 / COHORT SIGNALS</p><h2 id="cohort-title">Trial pulse, live.</h2></div>
-            <p>{cohort?.disclaimer || 'Summary derived from the available demo cohort.'}</p>
+            <div><p className="researcher-kicker">01 / COHORT SIGNALS</p><h2 id="cohort-title">Trial pulse, explained.</h2></div>
+            <div className="cohort-heading-actions"><p>{cohort?.scope_label || cohort?.disclaimer || 'Summary derived from the available demo cohort.'}</p><button type="button" onClick={() => loadDashboard(false)} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh data'} <span>↻</span></button><small>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Waiting for data'}</small></div>
           </div>
           <div className="cohort-metrics">
             {metrics.map(([index, label, value, note]) => <article key={label}>
@@ -257,13 +274,13 @@ export default function ResearcherDashboard({ patientId, onExit }) {
               <span><strong>{patient.display_name}</strong><small>{patient.main_risk_driver}</small></span>
               <b>{String(patient.alert_count).padStart(2, '0')}</b>
             </button>) : <p className="empty-queue">No demo patients are available.</p>}
-            <div className="queue-system-status"><span>QUEUE SYNC</span><strong><i />ONLINE</strong></div>
+            <div className="queue-system-status"><span>QUEUE STATUS</span><strong><i />REFRESHABLE</strong></div>
           </aside>
 
           <div className="patient-intelligence">
             <div className="patient-intelligence-top">
-              <div><p className="researcher-kicker">PATIENT INTELLIGENCE</p><h2 id="patient-intelligence-title">Patient 024</h2><span>{journey?.condition}</span></div>
-              <div className={`review-badge ${journey?.requires_review ? 'attention' : ''}`}><span className="review-dot attention" />{journey?.requires_review ? 'Requires review' : 'Monitoring'}<small>LIVE</small></div>
+              <div><p className="researcher-kicker">PATIENT INTELLIGENCE</p><h2 id="patient-intelligence-title">{selectedPatient?.display_name || journey?.patient_id || 'Patient'}</h2><span>{journey?.condition}</span></div>
+              <div className={`review-badge ${journey?.requires_review ? 'attention' : ''}`}><span className="review-dot attention" />{journey?.requires_review ? 'Requires review' : 'Monitoring'}<small>DEMO</small></div>
             </div>
 
             <div className="intelligence-summary">
@@ -295,10 +312,18 @@ export default function ResearcherDashboard({ patientId, onExit }) {
                 </article>)}</div> : <p className="empty-alerts">No meaningful changes detected yet. Submit a patient check-in to update the journey.</p>}
               </section>
               <section className="change-panel">
-                <div className="panel-heading"><div><span>Changes from baseline</span><strong>Longitudinal state</strong></div><span>Δ LIVE</span></div>
+                <div className="panel-heading"><div><span>Changes from baseline</span><strong>Longitudinal state</strong></div><span>Δ DEMO</span></div>
                 {journey?.changes_from_baseline?.length ? journey.changes_from_baseline.map((change) => <div className="baseline-change" key={change.field}><span>{pretty(change.field)}</span><strong>{change.before} <i>→</i> {change.after}</strong></div>) : <p className="empty-alerts">No changes from the synthetic baseline.</p>}
-                <button type="button" className="lab-demo-button" onClick={addDemoLab} disabled={labStatus === 'saving'}>{labStatus === 'saving' ? 'Updating journey…' : labStatus === 'saved' ? '✓ eGFR 61 added · Re-run' : 'Add demo lab · eGFR 61'}<span>↗</span></button>
-                <small className="lab-note">Adds a simulated Week 2 result and recomputes future predictions.</small>
+                <form className="lab-demo-form" onSubmit={addDemoLab}>
+                  <div className="lab-fields">
+                    <label><span>Week</span><select value={labDraft.week} onChange={(event) => { setLabStatus(''); setLabDraft((draft) => ({ ...draft, week: event.target.value })) }}>{[1, 2, 3, 4].map((week) => <option key={week} value={week}>Week {week}</option>)}</select></label>
+                    <label><span>Lab</span><select value={labDraft.name} onChange={(event) => { setLabStatus(''); setLabDraft((draft) => ({ ...draft, name: event.target.value })) }}><option value="kidney_function">Kidney function</option><option value="hemoglobin_g_dl">Hemoglobin</option><option value="wbc_10e9_l">WBC</option><option value="platelets_10e9_l">Platelets</option></select></label>
+                    <label><span>Value</span><input type="number" step="0.1" required value={labDraft.value} onChange={(event) => { setLabStatus(''); setLabDraft((draft) => ({ ...draft, value: event.target.value })) }} /></label>
+                    <label><span>Unit</span><input type="text" value={labDraft.unit} onChange={(event) => { setLabStatus(''); setLabDraft((draft) => ({ ...draft, unit: event.target.value })) }} /></label>
+                  </div>
+                  <button type="submit" className="lab-demo-button" disabled={labStatus === 'saving'}>{labStatus === 'saving' ? 'Updating journey…' : labStatus === 'saved' ? '✓ Lab saved · Add another' : 'Add simulated lab result'}<span>↗</span></button>
+                </form>
+                <small className="lab-note">Stores a simulated result, recomputes future predictions, and persists it across API restarts.</small>
               </section>
             </div>
           </div>

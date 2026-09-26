@@ -96,6 +96,9 @@ def get_cohort_summary() -> dict:
             "common_changes": [name for name, _ in change_counts.most_common(4)],
             "source": "available_demo_patient_collection",
             "synthetic_patient_count": len(journeys),
+            "live_demo_patients": len(journeys),
+            "is_synthetic_aggregate": False,
+            "scope_label": "Live demo twins currently available to this API session.",
         }
 
     rows = _synthetic_cohort_rows(DEMO_COHORT_SIZE)
@@ -109,5 +112,7 @@ def get_cohort_summary() -> dict:
         "source": "deterministic_synthetic_cohort_aggregate",
         "synthetic_patient_count": len(rows),
         "live_demo_patients": len(live_patients),
+        "is_synthetic_aggregate": True,
+        "scope_label": f"Simulated {len(rows)}-patient cohort · {len(live_patients)} live demo twin(s).",
         "disclaimer": "Fabricated aggregate for hackathon demonstration; not real trial data.",
     }

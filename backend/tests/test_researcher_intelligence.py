@@ -81,6 +81,21 @@ class ResearcherIntelligenceTests(unittest.TestCase):
         self.assertGreaterEqual(cohort["active_patients"], cohort["patients_requiring_review"])
         self.assertGreaterEqual(cohort["active_patients"], cohort["worsening_symptom_trajectories"])
         self.assertEqual(cohort["source"], "deterministic_synthetic_cohort_aggregate")
+        self.assertTrue(cohort["is_synthetic_aggregate"])
+        self.assertEqual(cohort["live_demo_patients"], 1)
+
+    def test_non_kidney_lab_is_visible_as_a_baseline_change(self):
+        researcher_store.save_lab_update(
+            self.twin.patient_id,
+            week=2,
+            name="hemoglobin_g_dl",
+            value=10.4,
+            unit="g/dL",
+        )
+        journey = researcher_service.get_patient_journey(self.twin.patient_id)
+        changes = {item["field"]: item for item in journey["changes_from_baseline"]}
+        self.assertEqual(changes["hemoglobin_g_dl"]["before"], 12.8)
+        self.assertEqual(changes["hemoglobin_g_dl"]["after"], 10.4)
 
     @unittest.skipUnless(importlib.util.find_spec("fastapi"), "FastAPI dependency is not installed")
     def test_existing_patient_api_smoke(self):

@@ -51,6 +51,7 @@ def _initial_state(patient: Mapping[str, Any], use_current_state: bool) -> dict:
     condition_features = deepcopy(
         baseline.get("condition_features") or baseline.get("condition_specific") or {}
     )
+    labs = {"kidney_function": kidney, **deepcopy(baseline.get("labs") or {})}
     return {
         "patient_id": patient.get("patient_id"),
         "condition": baseline.get("condition") or patient.get("condition"),
@@ -62,7 +63,8 @@ def _initial_state(patient: Mapping[str, Any], use_current_state: bool) -> dict:
         "baseline_sleep_quality": _baseline_sleep(baseline),
         "sleep_quality": _baseline_sleep(baseline),
         "baseline_kidney_function": kidney,
-        "labs": {"kidney_function": kidney, **deepcopy(baseline.get("labs") or {})},
+        "baseline_labs": deepcopy(labs),
+        "labs": labs,
         "overall_wellbeing": patient.get("overall_wellbeing") if use_current_state else None,
         "mood": None,
         "patient_concern": None,
@@ -258,15 +260,10 @@ def _changes_from_baseline(state: Mapping[str, Any]) -> list[dict]:
                 "after": state["sleep_quality"],
             }
         )
-    kidney = state["labs"]["kidney_function"]
-    if kidney != state["baseline_kidney_function"]:
-        changes.append(
-            {
-                "field": "kidney_function",
-                "before": state["baseline_kidney_function"],
-                "after": kidney,
-            }
-        )
+    for name, after in state["labs"].items():
+        before = state["baseline_labs"].get(name)
+        if before is not None and after != before:
+            changes.append({"field": name, "before": before, "after": after})
     return changes
 
 
