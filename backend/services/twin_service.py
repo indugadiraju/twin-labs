@@ -1,0 +1,84 @@
+"""
+Digital twin lifecycle: create_patient_twin() and update_patient_twin().
+
+update_patient_twin() is the generic state-update entrypoint; the
+check-in-specific update logic lives in checkin_service.apply_checkin_to_twin(),
+which calls into this module rather than duplicating twin-mutation logic.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Optional
+
+from backend.data import store
+from backend.models.patient_twin import PatientTwin, TwinStatus, new_patient_id
+
+
+def create_patient_twin(trial_id: str, patient_id: Optional[str] = None) -> PatientTwin:
+    """
+    Creates a new digital twin for a patient entering the trial.
+    Idempotent by patient_id: re-calling with an existing patient_id
+    returns the existing twin rather than clobbering it.
+    """
+    if patient_id:
+        existing = store.get_twin(patient_id)
+        if existing:
+            return existing
+    else:
+        patient_id = new_patient_id()
+
+    twin = PatientTwin(patient_id=patient_id, trial_id=trial_id)
+    twin.history.append(
+        {
+            "week": 1,
+            "status": twin.status.value,
+            "summary": "Twin created at trial enrollment.",
+            "at": twin.created_at,
+        }
+    )
+    store.save_twin(twin)
+    return twin
+
+
+def update_patient_twin(
+    patient_id: str,
+    *,
+    current_week: Optional[int] = None,
+    status: Optional[TwinStatus] = None,
+    overall_wellbeing: Optional[int] = None,
+    active_symptoms: Optional[list] = None,
+    history_note: Optional[str] = None,
+) -> PatientTwin:
+    """
+    Generic patient twin update. Only provided fields are changed.
+    Appends a history entry when history_note is given, so the timeline
+    has a trace of what changed and why.
+    """
+    twin = store.get_twin(patient_id)
+    if twin is None:
+        raise ValueError(f"No twin found for patient_id={patient_id}")
+
+    if current_week is not None:
+        twin.current_week = current_week
+    if status is not None:
+        twin.status = status
+    if overall_wellbeing is not None:
+        twin.overall_wellbeing = overall_wellbeing
+    if active_symptoms is not None:
+        twin.active_symptoms = active_symptoms
+
+    twin.updated_at = datetime.now(timezone.utc).isoformat()
+
+    if history_note:
+        twin.history.append(
+            {
+                "week": twin.current_week,
+                "status": twin.status.value,
+                "summary": history_note,
+                "at": twin.updated_at,
+            }
+        )
+
+    store.save_twin(twin)
+    return twin
