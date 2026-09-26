@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from './api'
 import CheckInForm from './components/CheckInForm'
 import JourneyTimeline from './components/JourneyTimeline'
+import PatientBaseline from './components/PatientBaseline'
 import TrialAssistant from './components/TrialAssistant'
 import './App.css'
 
@@ -50,6 +51,7 @@ export default function App() {
       </header>
 
       <main className="grid">
+        <PatientBaseline baseline={twin?.synthetic_baseline} />
         <CheckInForm
           patientId={DEMO_PATIENT_ID}
           currentWeek={twin?.current_week}

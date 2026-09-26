@@ -24,6 +24,31 @@ export default function JourneyTimeline({ timeline, onRefresh }) {
         Current status: <span className={`badge ${timeline.status}`}>{STATUS_LABEL[timeline.status]}</span>
       </p>
 
+      {timeline.trial && (
+        <div className="trial-info">
+          <div className="row-between">
+            <strong>{timeline.trial.short_name}</strong>
+            <span className="tag source-real">Real trial data</span>
+          </div>
+          <p className="small">{timeline.trial.purpose}</p>
+          <p className="muted small">
+            Sponsor: {timeline.trial.sponsor} · Follow-up: {timeline.trial.follow_up} ·{' '}
+            <a href={timeline.trial.source_url} target="_blank" rel="noreferrer">
+              {timeline.trial.nct_id} on ClinicalTrials.gov
+            </a>
+          </p>
+        </div>
+      )}
+
+      <div className="row-between schedule-heading">
+        <h3 className="no-margin">Visit schedule</h3>
+        <span className="tag source-simulated">Simulated for demo</span>
+      </div>
+      <p className="muted small">
+        The public trial record doesn't publish a week-by-week visit schedule, so this weekly
+        cadence is simulated for the demo.
+      </p>
+
       <div className="timeline">
         {timeline.weeks.map((w) => (
           <div key={w.week} className={`timeline-week ${w.week === timeline.current_week ? 'current' : ''}`}>
@@ -45,6 +70,8 @@ export default function JourneyTimeline({ timeline, onRefresh }) {
                     Symptoms: {w.checkin.symptoms.map((s) => `${s.name} (${s.severity}/10)`).join(', ')}
                   </>
                 )}
+                <br />
+                <span className="tag source-simulated">Simulated check-in</span>
               </p>
             ) : (
               <p className="muted">No check-in submitted yet.</p>
@@ -52,7 +79,8 @@ export default function JourneyTimeline({ timeline, onRefresh }) {
 
             {w.prediction && (
               <p className="muted mock-tag">
-                Mock predicted risk score: {w.prediction.mock_risk_score} (placeholder — not a real model)
+                Mock predicted risk score: {w.prediction.mock_risk_score}{' '}
+                <span className="tag source-mock">Mock — placeholder for Indu's model</span>
               </p>
             )}
           </div>

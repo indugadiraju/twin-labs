@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from backend.data import store
-from backend.data.mock_trial_docs import TRIAL_ID
+from backend.data.trial_docs import TRIAL_ID
 from backend.services import checkin_service, timeline_service, trial_assistant, twin_service
 
 app = FastAPI(title="TwinLab — Patient API (demo)")

@@ -12,14 +12,23 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from backend.data import store
+from backend.data.synthetic_patient_profiles import DEFAULT_CONDITION, generate_synthetic_baseline
 from backend.models.patient_twin import PatientTwin, TwinStatus, new_patient_id
 
 
-def create_patient_twin(trial_id: str, patient_id: Optional[str] = None) -> PatientTwin:
+def create_patient_twin(
+    trial_id: str,
+    patient_id: Optional[str] = None,
+    condition: str = DEFAULT_CONDITION,
+) -> PatientTwin:
     """
     Creates a new digital twin for a patient entering the trial.
     Idempotent by patient_id: re-calling with an existing patient_id
     returns the existing twin rather than clobbering it.
+
+    Attaches a synthetic baseline profile (age, treatment, labs, etc.) —
+    fabricated for the demo, never real patient data. See
+    backend/data/synthetic_patient_profiles.py.
     """
     if patient_id:
         existing = store.get_twin(patient_id)
@@ -29,6 +38,7 @@ def create_patient_twin(trial_id: str, patient_id: Optional[str] = None) -> Pati
         patient_id = new_patient_id()
 
     twin = PatientTwin(patient_id=patient_id, trial_id=trial_id)
+    twin.synthetic_baseline = generate_synthetic_baseline(patient_id, condition=condition)
     twin.history.append(
         {
             "week": 1,

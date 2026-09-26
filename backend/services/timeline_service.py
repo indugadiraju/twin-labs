@@ -1,17 +1,25 @@
 """
 Week 1-4 patient journey timeline.
 
-Combines each week's real check-in history (from the twin) with mock
-prediction output (standing in for Indu's model, which is not
-implemented here) so the demo can show a "journey" view without
-depending on the real prediction/counterfactual systems.
+Combines four kinds of data, each labeled by source so the UI/API never
+blur them together:
+
+  - "real"      -> trial name/sponsor/purpose etc., from trial_docs.REAL_TRIAL
+                   (sourced from the public TAILORx ClinicalTrials.gov record)
+  - "simulated_for_demo" -> the Week 1-4 visit schedule itself, since the
+                   public trial record has no such granular detail
+  - "patient_reported (simulated)" -> check-ins actually submitted through
+                   this demo's UI; real code path, but no real trial
+                   participants are behind them yet
+  - "mock"      -> the predicted risk trajectory, standing in for Indu's
+                   prediction model, which is not implemented here
 """
 
 from __future__ import annotations
 
 from backend.data import store
 from backend.data.mock_predictions import mock_predicted_trajectory
-from backend.data.mock_trial_docs import get_visit
+from backend.data.trial_docs import REAL_TRIAL, get_visit
 
 
 def get_patient_journey(patient_id: str, weeks: int = 4) -> dict:
@@ -25,15 +33,15 @@ def get_patient_journey(patient_id: str, weeks: int = 4) -> dict:
     timeline = []
     for week in range(1, weeks + 1):
         checkin = checkins_by_week.get(week)
-        visit = get_visit(week)
-        prediction = predictions_by_week.get(week)
+        visit = get_visit(week)  # tagged "source": "simulated_for_demo"
+        prediction = predictions_by_week.get(week)  # tagged "source": "mock"
 
         timeline.append(
             {
                 "week": week,
                 "visit": visit,
                 "checkin": checkin.to_dict() if checkin else None,
-                "prediction": prediction,  # explicitly mock, see mock_predictions.py
+                "prediction": prediction,
             }
         )
 
@@ -42,5 +50,23 @@ def get_patient_journey(patient_id: str, weeks: int = 4) -> dict:
         "trial_id": twin.trial_id,
         "current_week": twin.current_week,
         "status": twin.status.value,
+        # Real trial grounding — see trial_docs.REAL_TRIAL for the full record.
+        "trial": {
+            "nct_id": REAL_TRIAL["nct_id"],
+            "short_name": REAL_TRIAL["short_name"],
+            "official_title": REAL_TRIAL["official_title"],
+            "sponsor": REAL_TRIAL["sponsor"],
+            "purpose": REAL_TRIAL["purpose"],
+            "follow_up": REAL_TRIAL["follow_up"],
+            "source_url": REAL_TRIAL["source"]["url"],
+        },
         "weeks": timeline,
+        # Explicit provenance so the UI can label every section correctly.
+        "data_sources": {
+            "trial_info": "real (TAILORx, NCT00310180, ClinicalTrials.gov)",
+            "visit_schedule": "simulated_for_demo",
+            "patient_baseline": "synthetic",
+            "checkins": "patient_reported_simulated",
+            "predictions": "mock",
+        },
     }

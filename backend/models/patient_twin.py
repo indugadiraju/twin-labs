@@ -6,8 +6,9 @@ a continuously-updated snapshot of their clinical data, treatment info,
 labs, and patient-reported state, built from their weekly check-ins.
 
 Disease-independent by design: nothing here assumes breast cancer
-specifically. The demo trial config (visit schedule, symptom list) lives
-in backend/data/mock_trial_docs.py.
+specifically. The demo trial config (real trial grounding + simulated
+visit schedule) lives in backend/data/trial_docs.py; synthetic baseline
+patient data lives in backend/data/synthetic_patient_profiles.py.
 """
 
 from __future__ import annotations
@@ -44,6 +45,13 @@ class PatientTwin:
 
     status: TwinStatus = TwinStatus.STABLE
 
+    # Synthetic baseline profile (age, treatment, labs, etc.) generated at
+    # twin creation — see backend/data/synthetic_patient_profiles.py.
+    # None until create_patient_twin() sets it. Always fabricated data,
+    # never a real patient record; kept distinct from active_symptoms /
+    # overall_wellbeing below, which come from the (simulated) check-ins.
+    synthetic_baseline: Optional[dict] = None
+
     # Rolling patient-reported state, most recent values.
     # Each entry: {"name": str, "severity": int, "notes": str | None}
     active_symptoms: list[dict] = field(default_factory=list)
@@ -62,6 +70,7 @@ class PatientTwin:
             "trial_id": self.trial_id,
             "current_week": self.current_week,
             "status": self.status.value,
+            "synthetic_baseline": self.synthetic_baseline,
             "active_symptoms": self.active_symptoms,
             "overall_wellbeing": self.overall_wellbeing,
             "history": self.history,

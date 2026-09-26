@@ -134,6 +134,76 @@ button:disabled {
   color: #c62828;
 }
 
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag.source-real {
+  background: #e6f0ff;
+  color: #1a4fb3;
+}
+
+.tag.source-simulated {
+  background: #fff4e5;
+  color: #b3660d;
+}
+
+.tag.source-synthetic {
+  background: #f0e6ff;
+  color: #6a2fb3;
+}
+
+.tag.source-mock {
+  background: #eee;
+  color: #555;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.no-margin {
+  margin: 0;
+}
+
+.trial-info {
+  background: #f7f9fc;
+  border: 1px solid #e2e2ea;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.trial-info p {
+  margin: 4px 0 0 0;
+}
+
+.schedule-heading {
+  margin-top: 10px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 6px 10px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.profile-grid dt {
+  font-weight: 600;
+  color: #555;
+}
+
+.profile-grid dd {
+  margin: 0;
+}
+
 .timeline {
   display: flex;
   flex-direction: column;
