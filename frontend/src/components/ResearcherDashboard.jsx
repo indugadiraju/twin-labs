@@ -7,9 +7,9 @@ const percent = (value) => `${Math.round((Number(value) || 0) * 100)}%`
 const pretty = (value) => String(value || '').replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 
 const riskRows = [
-  { label: 'Fatigue', key: 'fatigue_risk', color: '#28aeb7' },
-  { label: 'Nausea', key: 'nausea_risk', color: '#5b8fc4' },
-  { label: 'Adverse event', key: 'adverse_event_risk', color: '#e6787e' },
+  { label: 'Fatigue', key: 'fatigue_risk', color: '#7954c7' },
+  { label: 'Nausea', key: 'nausea_risk', color: '#a06edb' },
+  { label: 'Adverse event', key: 'adverse_event_risk', color: '#e385b7' },
   { label: 'Dropout', key: 'dropout_risk', color: '#ffb45e' },
 ]
 
@@ -59,8 +59,8 @@ function RiskTrajectory({ weeks = [] }) {
       <desc id="risk-chart-desc">Line chart showing fatigue, nausea, adverse event, and dropout risk percentages across four forecast weeks.</desc>
       <defs>
         <linearGradient id="risk-area" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#28aeb7" stopOpacity=".2" />
-          <stop offset="100%" stopColor="#28aeb7" stopOpacity="0" />
+          <stop offset="0%" stopColor="#7954c7" stopOpacity=".2" />
+          <stop offset="100%" stopColor="#7954c7" stopOpacity="0" />
         </linearGradient>
       </defs>
       {[0, .25, .5, .75, 1].map((tick) => {
