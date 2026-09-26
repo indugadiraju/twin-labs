@@ -1,91 +1,15 @@
-const STATUS_LABEL = {
-  stable: 'Stable',
-  watch: 'Watch',
-  needs_attention: 'Needs Attention',
-}
+import { useState } from 'react'
+
+const severity = (checkin, name) => checkin?.symptoms?.find((item) => item.name.toLowerCase() === name.toLowerCase())?.severity
 
 export default function JourneyTimeline({ timeline, onRefresh }) {
-  if (!timeline) {
-    return (
-      <div className="card">
-        <h2>Week 1–4 Journey</h2>
-        <p>No timeline yet — create a twin to get started.</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="card">
-      <div className="row-between">
-        <h2>Week 1–4 Journey</h2>
-        <button onClick={onRefresh}>Refresh</button>
-      </div>
-      <p>
-        Current status: <span className={`badge ${timeline.status}`}>{STATUS_LABEL[timeline.status]}</span>
-      </p>
-
-      {timeline.trial && (
-        <div className="trial-info">
-          <div className="row-between">
-            <strong>{timeline.trial.short_name}</strong>
-            <span className="tag source-real">Real trial data</span>
-          </div>
-          <p className="small">{timeline.trial.purpose}</p>
-          <p className="muted small">
-            Sponsor: {timeline.trial.sponsor} · Follow-up: {timeline.trial.follow_up} ·{' '}
-            <a href={timeline.trial.source_url} target="_blank" rel="noreferrer">
-              {timeline.trial.nct_id} on ClinicalTrials.gov
-            </a>
-          </p>
-        </div>
-      )}
-
-      <div className="row-between schedule-heading">
-        <h3 className="no-margin">Visit schedule</h3>
-        <span className="tag source-simulated">Simulated for demo</span>
-      </div>
-      <p className="muted small">
-        The public trial record doesn't publish a week-by-week visit schedule, so this weekly
-        cadence is simulated for the demo.
-      </p>
-
-      <div className="timeline">
-        {timeline.weeks.map((w) => (
-          <div key={w.week} className={`timeline-week ${w.week === timeline.current_week ? 'current' : ''}`}>
-            <h3>Week {w.week}</h3>
-            {w.visit && (
-              <p className="visit">
-                <strong>{w.visit.title}</strong>
-                <br />
-                {w.visit.details}
-              </p>
-            )}
-
-            {w.checkin ? (
-              <p>
-                Wellbeing: {w.checkin.overall_wellbeing}/10
-                {w.checkin.symptoms.length > 0 && (
-                  <>
-                    <br />
-                    Symptoms: {w.checkin.symptoms.map((s) => `${s.name} (${s.severity}/10)`).join(', ')}
-                  </>
-                )}
-                <br />
-                <span className="tag source-simulated">Simulated check-in</span>
-              </p>
-            ) : (
-              <p className="muted">No check-in submitted yet.</p>
-            )}
-
-            {w.prediction && (
-              <p className="muted mock-tag">
-                Mock predicted risk score: {w.prediction.mock_risk_score}{' '}
-                <span className="tag source-mock">Mock — placeholder for Indu's model</span>
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  const [selected, setSelected] = useState(null)
+  if (!timeline) return null
+  const weeks = timeline.weeks || []
+  const week = selected === 0 ? { week: 0, visit: null, checkin: null, prediction: null } : weeks.find((item) => item.week === (selected ?? timeline.current_week)) || weeks[0]
+  if (!week) return null
+  const prior = weeks.find((item) => item.week === week.week - 1)?.checkin
+  const current = week.checkin
+  const changes = ['Fatigue', 'Nausea', 'Pain'].map((name) => ({ name, before: severity(prior, name), after: severity(current, name) })).filter((item) => item.after !== undefined)
+  return <section className="journey-section page-width" id="journey"><div className="section-heading"><div><p className="eyebrow eyebrow-dark">THE PATIENT JOURNEY</p><h2>See the whole picture,<br /><em>week by week.</em></h2></div><p>Follow your reported changes and upcoming study milestones in one place.</p></div><div className="trial-ribbon"><div><span className="eyebrow eyebrow-dark">REAL PUBLIC TRIAL</span><strong>{timeline.trial?.short_name || "Study information"} <small>{timeline.trial?.nct_id}</small></strong><p>{timeline.trial?.purpose}</p></div>{timeline.trial?.source_url && <a href={timeline.trial.source_url} target="_blank" rel="noreferrer">View public trial record ↗</a>}</div><div className="journey-panel"><div className="journey-track" role="tablist" aria-label="Study weeks"><div className="track-line" aria-hidden="true" /><button type="button" role="tab" aria-selected={week.week === 0} aria-controls="week-detail" className={`journey-node ${week.week === 0 ? 'selected' : ''}`} onClick={() => setSelected(0)}><span className="node-circle">✳</span><span className="node-label">Baseline</span><small>SYNTHETIC START</small></button>{weeks.map((item) => <button type="button" role="tab" aria-selected={week.week === item.week} aria-controls="week-detail" key={item.week} className={`journey-node ${week.week === item.week ? 'selected' : ''} ${item.week === timeline.current_week ? 'active' : ''}`} onClick={() => setSelected(item.week)}><span className="node-circle">{String(item.week).padStart(2, '0')}</span><span className="node-label">{`Week ${item.week}`}</span><small>{item.checkin ? 'CHECK-IN RECORDED' : item.week < timeline.current_week ? 'NO CHECK-IN' : 'DEMO MILESTONE'}</small></button>)}</div><div className="week-detail" id="week-detail" role="tabpanel"><div className="detail-main"><span className="eyebrow">{week.week === timeline.current_week ? 'CURRENT CHAPTER' : 'JOURNEY CHAPTER'} · {String(week.week).padStart(2, '0')}</span><h3>{week.week === 0 ? 'Your baseline' : `Week ${week.week}`}</h3><p>{week.week === 0 ? 'The beginning of your journey' : week.visit?.title || 'Weekly check-in'}</p><span className="data-label">Simulated demo visit schedule</span><p className="visit-copy">{week.week === 0 ? 'This is a synthetic starting point for the demo. The trial schedule begins in Week 1.' : week.visit?.details || 'No visit scheduled in this demo week.'}</p></div><div className="detail-report"><span className="eyebrow">YOUR REPORTED STATE</span>{current ? <><strong className="wellbeing-value">{current.overall_wellbeing}<small> / 10</small></strong><span className="metric-caption">Overall wellbeing</span><div className="detail-symptoms">{current.symptoms.length ? current.symptoms.map((item) => <span key={item.name}>{item.name} <b>{item.severity}/10</b></span>) : <span>No symptoms reported</span>}</div><span className="data-label">Simulated patient check-in</span></> : <p className="empty-report">{week.week === 0 ? 'Synthetic demo baseline. No patient report is recorded here.' : 'No check-in for this week yet. Your report will appear here after you submit one.'}</p>}</div><div className="detail-prediction"><span className="eyebrow">LOOKING AHEAD</span><strong>{week.prediction ? `${Math.round(week.prediction.mock_risk_score * 100)}%` : '—'}</strong><span className="metric-caption">Mock risk score</span><div className="prediction-bar"><span style={{ width: `${Math.min(100, Math.max(0, (Number(week.prediction?.mock_risk_score) || 0) * 100))}%` }} /></div><p>{week.week === 0 ? 'No baseline prediction is available.' : 'Placeholder prediction. No clinical model is connected.'}</p>{changes.length > 0 && <div className="change-list"><span className="eyebrow">REPORTED CHANGE</span>{changes.map((item) => <span key={item.name}>{item.name} <b>{item.before === undefined ? `New · ${item.after}/10` : `${item.before} → ${item.after}`}</b></span>)}</div>}</div></div></div><button className="text-button refresh-button" type="button" onClick={onRefresh}>↻ Refresh journey</button></section>
 }

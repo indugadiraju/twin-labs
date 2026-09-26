@@ -1,120 +1,39 @@
 import { useState } from 'react'
 import { api } from '../api'
 
-const COMMON_SYMPTOMS = ['Fatigue', 'Nausea', 'Pain', 'Fever', 'Shortness of breath']
+const SYMPTOMS = ['Fatigue', 'Nausea', 'Pain', 'Anxiety', 'Fever', 'Shortness of breath']
+const MOODS = ['Calm', 'Okay', 'Anxious', 'Low']
 
-export default function CheckInForm({ patientId, currentWeek, onSubmitted }) {
-  const [week, setWeek] = useState(currentWeek || 1)
+export default function CheckInForm({ patientId, currentWeek, onSubmitted, update }) {
+  const week = currentWeek || 1
   const [wellbeing, setWellbeing] = useState(7)
-  const [symptomSeverity, setSymptomSeverity] = useState({})
-  const [freeText, setFreeText] = useState('')
-  const [status, setStatus] = useState(null) // 'saving' | 'saved' | 'error'
+  const [symptoms, setSymptoms] = useState({})
+  const [mood, setMood] = useState('')
+  const [sleep, setSleep] = useState(7)
+  const [notes, setNotes] = useState('')
+  const [newSymptom, setNewSymptom] = useState('')
+  const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
 
-  const toggleSymptom = (name, checked) => {
-    setSymptomSeverity((prev) => {
-      const next = { ...prev }
-      if (checked) next[name] = next[name] ?? 3
-      else delete next[name]
-      return next
-    })
-  }
-
-  const setSeverity = (name, value) => {
-    setSymptomSeverity((prev) => ({ ...prev, [name]: Number(value) }))
-  }
-
-  const submit = async (e) => {
-    e.preventDefault()
+  const toggle = (name) => setSymptoms((old) => {
+    const next = { ...old }
+    if (name in next) delete next[name]
+    else next[name] = 3
+    return next
+  })
+  const submit = async (event) => {
+    event.preventDefault()
     setStatus('saving')
     setError('')
     try {
-      const symptoms = Object.entries(symptomSeverity).map(([name, severity]) => ({
-        name,
-        severity,
-      }))
-      const result = await api.submitCheckin(patientId, {
-        week: Number(week),
-        overall_wellbeing: Number(wellbeing),
-        symptoms,
-        free_text: freeText || null,
-      })
+      const reported = { ...symptoms }
+      if (newSymptom.trim()) reported[newSymptom.trim()] = reported[newSymptom.trim()] ?? 3
+      if (mood === 'Anxious') reported.Anxiety = reported.Anxiety ?? 3
+      const context = [`Mood: ${mood || 'not selected'}`, `Sleep quality: ${sleep}/10`, notes.trim()].filter(Boolean).join('\n')
+      const result = await api.submitCheckin(patientId, { week: Number(week), overall_wellbeing: Number(wellbeing), symptoms: Object.entries(reported).map(([name, severity]) => ({ name, severity })), free_text: context })
       setStatus('saved')
-      onSubmitted?.(result.twin)
-    } catch (err) {
-      setStatus('error')
-      setError(err.message)
-    }
+      onSubmitted?.(result.twin, result.checkin)
+    } catch (err) { setStatus('error'); setError(err.message) }
   }
-
-  return (
-    <form className="card" onSubmit={submit}>
-      <h2>Weekly Check-In</h2>
-
-      <label>
-        Week
-        <input
-          type="number"
-          min="1"
-          max="4"
-          value={week}
-          onChange={(e) => setWeek(e.target.value)}
-        />
-      </label>
-
-      <label>
-        Overall wellbeing today (0 = worst, 10 = best): <strong>{wellbeing}</strong>
-        <input
-          type="range"
-          min="0"
-          max="10"
-          value={wellbeing}
-          onChange={(e) => setWellbeing(e.target.value)}
-        />
-      </label>
-
-      <fieldset>
-        <legend>Symptoms to report</legend>
-        {COMMON_SYMPTOMS.map((name) => (
-          <div key={name} className="symptom-row">
-            <label>
-              <input
-                type="checkbox"
-                checked={name in symptomSeverity}
-                onChange={(e) => toggleSymptom(name, e.target.checked)}
-              />
-              {name}
-            </label>
-            {name in symptomSeverity && (
-              <input
-                type="range"
-                min="0"
-                max="10"
-                value={symptomSeverity[name]}
-                onChange={(e) => setSeverity(name, e.target.value)}
-              />
-            )}
-            {name in symptomSeverity && <span>{symptomSeverity[name]}/10</span>}
-          </div>
-        ))}
-      </fieldset>
-
-      <label>
-        Anything else you'd like to share?
-        <textarea
-          value={freeText}
-          onChange={(e) => setFreeText(e.target.value)}
-          rows={3}
-          placeholder="Optional"
-        />
-      </label>
-
-      <button type="submit" disabled={status === 'saving'}>
-        {status === 'saving' ? 'Submitting...' : 'Submit check-in'}
-      </button>
-
-      {status === 'saved' && <p className="ok">Check-in submitted — your twin has been updated.</p>}
-      {status === 'error' && <p className="err">{error}</p>}
-    </form>
-  )
+  return <div className="checkin-panel"><div className="panel-top"><span className="eyebrow eyebrow-dark">WEEKLY CHECK-IN</span><span className="step-mark">WEEK {String(week).padStart(2, '0')} / 04</span></div>{status === 'saved' && update ? <div className="success-state" role="status"><div className="success-icon">✳</div><h3>Your twin has<br /><em>been updated.</em></h3><p>Your latest report now appears in your journey and current twin state.</p><div className="success-changes"><div><span>Wellbeing</span><strong>{update.previous?.overall_wellbeing ?? '—'} → {update.current?.overall_wellbeing ?? '—'}</strong></div>{update.checkin?.symptoms?.slice(0, 3).map((item) => <div key={item.name}><span>{item.name}</span><strong>{item.severity}/10</strong></div>)}</div><button className="secondary-button" onClick={() => setStatus(null)}>Edit this check-in</button></div> : <form onSubmit={submit}><h3>How are you<br /><em>feeling today?</em></h3><p className="form-intro">Take a moment. Your answers help shape your journey.</p><label className="range-question" htmlFor="wellbeing">Overall, how have you felt this week? <strong>{wellbeing} / 10</strong></label><input id="wellbeing" type="range" min="0" max="10" value={wellbeing} onChange={(e) => setWellbeing(Number(e.target.value))} /><div className="range-ends"><span>Not well</span><span>Feeling good</span></div><div className="form-rule" /><p className="form-question">What have you noticed?</p><div className="pill-group">{SYMPTOMS.map((name) => <button key={name} type="button" aria-pressed={name in symptoms} className={`choice-pill ${name in symptoms ? 'chosen' : ''}`} onClick={() => toggle(name)}>{name in symptoms ? '✓ ' : '+ '}{name}</button>)}</div>{Object.entries(symptoms).map(([name, value]) => <label className="symptom-slider" key={name}>{name} <strong>{value}/10</strong><input type="range" min="0" max="10" value={value} onChange={(e) => setSymptoms((old) => ({ ...old, [name]: Number(e.target.value) }))} /></label>)}<label className="field-label" htmlFor="new-symptom">Another symptom?</label><input id="new-symptom" className="plain-input" value={newSymptom} onChange={(e) => setNewSymptom(e.target.value)} placeholder="Add a symptom, if needed" /><div className="form-rule" /><label className="range-question" htmlFor="sleep">How has your sleep been? <strong>{sleep} / 10</strong></label><input id="sleep" type="range" min="0" max="10" value={sleep} onChange={(e) => setSleep(Number(e.target.value))} /><div className="range-ends"><span>Poor</span><span>Restful</span></div><p className="form-question mood-question">What best describes your mood?</p><div className="pill-group">{MOODS.map((item) => <button key={item} type="button" aria-pressed={mood === item} className={`choice-pill ${mood === item ? 'chosen' : ''}`} onClick={() => setMood(item)}>{item}</button>)}</div><label className="field-label" htmlFor="notes">Anything else you want your study team to know?</label><textarea id="notes" rows="3" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Share what's on your mind..." /><div className="form-actions"><span>Simulated demo check-in</span><button className="primary-button" type="submit" disabled={status === 'saving'}>{status === 'saving' ? 'Updating your twin…' : 'Update my twin'} <span aria-hidden="true">↗</span></button></div>{status === 'error' && <p className="form-error" role="alert">{error}</p>}</form>}</div>
 }
