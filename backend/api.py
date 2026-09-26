@@ -12,9 +12,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from backend.data import store
+from backend.data import researcher_store, store
 from backend.data.trial_docs import TRIAL_ID
-from backend.services import checkin_service, timeline_service, trial_assistant, twin_service
+from backend.services import checkin_service, researcher_service, timeline_service, trial_assistant, twin_service
 
 app = FastAPI(title="TwinLab — Patient API (demo)")
 
@@ -48,6 +48,13 @@ class CheckInRequest(BaseModel):
 
 class AssistantQuestionRequest(BaseModel):
     question: str
+
+
+class LabUpdateRequest(BaseModel):
+    week: int = Field(ge=1, le=4)
+    name: str = "kidney_function"
+    value: float
+    unit: str | None = None
 
 
 # ---------- patient twin ----------
@@ -93,6 +100,48 @@ def get_timeline(patient_id: str, weeks: int = 4):
         return timeline_service.get_patient_journey(patient_id, weeks=weeks)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# ---------- Crystal's researcher intelligence ----------
+
+@app.get("/api/researcher/patients")
+def list_researcher_patients():
+    return {"patients": researcher_service.list_patients(), "source": "synthetic_patient_demo"}
+
+
+@app.get("/api/researcher/patients/{patient_id}/journey")
+def get_researcher_journey(patient_id: str, weeks: int = 4):
+    try:
+        return researcher_service.get_patient_journey(patient_id, weeks=weeks)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get("/api/researcher/patients/{patient_id}/summary")
+def get_researcher_summary(patient_id: str):
+    try:
+        return researcher_service.get_patient_summary(patient_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.post("/api/researcher/patients/{patient_id}/labs")
+def add_researcher_lab(patient_id: str, req: LabUpdateRequest):
+    if store.get_twin(patient_id) is None:
+        raise HTTPException(status_code=404, detail="No twin found for this patient")
+    update = researcher_store.save_lab_update(
+        patient_id,
+        week=req.week,
+        name=req.name,
+        value=req.value,
+        unit=req.unit,
+    )
+    return {"lab_update": update, "journey": researcher_service.get_patient_journey(patient_id)}
+
+
+@app.get("/api/researcher/cohort-summary")
+def get_researcher_cohort_summary():
+    return researcher_service.get_cohort_summary()
 
 
 # ---------- Trial Assistant ----------
