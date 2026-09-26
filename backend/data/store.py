@@ -18,10 +18,12 @@ from backend.models.checkin import PatientCheckIn, SymptomEntry
 _twins: dict[str, PatientTwin] = {}
 _checkins: dict[str, list[PatientCheckIn]] = {}  # patient_id -> check-ins, oldest first
 _persistence_enabled = False
-# Vercel's serverless filesystem is read-only except for /tmp, so the demo cache
-# lives there when deployed (per function instance); locally it stays in .twinlabs/.
-_default_state_dir = Path("/tmp/.twinlabs") if os.environ.get("VERCEL") else Path(__file__).resolve().parents[2] / ".twinlabs"
-_state_file = Path(os.environ.get("TWINLABS_STATE_FILE", _default_state_dir / "patient_state.json"))
+_state_file = Path(
+    os.environ.get(
+        "TWINLABS_STATE_FILE",
+        Path(__file__).resolve().parents[2] / ".twinlabs" / "patient_state.json",
+    )
+)
 
 
 def _twin_from_dict(data: dict) -> PatientTwin:
