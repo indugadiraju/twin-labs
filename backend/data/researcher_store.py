@@ -15,21 +15,24 @@ from pathlib import Path
 
 _lab_updates: dict[str, list[dict]] = {}
 _persistence_enabled = False
-_state_file = Path(
-    os.environ.get(
-        "TWINLABS_RESEARCHER_STATE_FILE",
-        Path(__file__).resolve().parents[2] / ".twinlabs" / "researcher_state.json",
-    )
-)
+# Vercel's serverless filesystem is read-only except for /tmp, so the demo cache
+# lives there when deployed (per function instance); locally it stays in .twinlabs/.
+_default_state_dir = Path("/tmp/.twinlabs") if os.environ.get("VERCEL") else Path(__file__).resolve().parents[2] / ".twinlabs"
+_state_file = Path(os.environ.get("TWINLABS_RESEARCHER_STATE_FILE", _default_state_dir / "researcher_state.json"))
 
 
 def _persist() -> None:
     if not _persistence_enabled:
         return
-    _state_file.parent.mkdir(parents=True, exist_ok=True)
-    temporary = _state_file.with_suffix(".tmp")
-    temporary.write_text(json.dumps({"lab_updates": _lab_updates}, indent=2), encoding="utf-8")
-    temporary.replace(_state_file)
+    try:
+        _state_file.parent.mkdir(parents=True, exist_ok=True)
+        temporary = _state_file.with_suffix(".tmp")
+        temporary.write_text(json.dumps({"lab_updates": _lab_updates}, indent=2), encoding="utf-8")
+        temporary.replace(_state_file)
+    except OSError:
+        # The JSON file is only a demo cache: if it can't be written (e.g. a
+        # read-only filesystem), keep serving from memory rather than failing.
+        pass
 
 
 def enable_persistence(path: str | Path | None = None) -> None:
