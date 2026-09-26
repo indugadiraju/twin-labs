@@ -2,8 +2,14 @@ import { useState } from 'react'
 import { CADENCES, DEFAULT_PROTOCOL, completedCheckins, observationDensity, scheduleDays } from './checkinSchedule'
 import TrajectoryProgression from './TrajectoryProgression'
 import TwinStage from './TwinStage'
-import { METRICS } from './twinLenses'
+import { METRICS, doseParts } from './twinLenses'
 import { useCounterfactual } from './useCounterfactual'
+
+// Display only: "Docetaxel / 75 mg/m²" per drug, then the schedule.
+const DoseLines = ({ dose }) => {
+  const { drugs, schedule } = doseParts(dose)
+  return <span className="dose-lines">{drugs.map((d) => <span key={d.name + d.amount}>{d.name && <b>{d.name}</b>}<span>{d.amount}</span></span>)}{schedule && <small>{schedule}</small>}</span>
+}
 
 const signed = (metric, d) => {
   const text = metric.delta(Math.abs(d))
@@ -20,14 +26,14 @@ const COPY = {
     hint: (d) => (d === 100 ? 'Current prescribed dose.' : `${d}% of the current prescribed dose.`),
     run: 'Run simulation', idle: 'One variable at a time. More controls coming.', stale: 'Slider changed. Run to update the modified twin.',
     outcomes: 'PREDICTED OUTCOMES', heading: <>Original <b>→</b> <em>Modified</em></>,
-    fields: (b, _profile, study) => [...(study ? [['Study', `${study.phase} · ${study.name}`]] : []), ['Age', b.age], ['Treatment', b.treatment], ['Current dose', b.dose], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`], ['Recurrence score', b.condition_specific?.oncotype_dx_recurrence_score ?? '—']],
+    fields: (b, _profile, study) => [...(study ? [['Study', `${study.phase} · ${study.name}`]] : []), ['Age', b.age], ['Treatment', b.treatment], ['Current treatment', <DoseLines key="dose" dose={b.dose} />], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`], ['Recurrence score', b.condition_specific?.oncotype_dx_recurrence_score ?? '—']],
   },
   patient: {
-    context: 'ABOUT YOUR TWIN', control: 'EXPLORE A SCENARIO', dose: 'Simulated treatment exposure', current: '100% · current plan',
-    hint: (d) => (d === 100 ? 'Matches your current plan in the simulation.' : `The simulation uses ${d}% of your current plan. Your real treatment does not change.`),
+    context: 'ABOUT YOUR TWIN', control: 'EXPLORE A SCENARIO', dose: 'Treatment dose', current: '100% · current treatment',
+    hint: (d) => (d === 100 ? 'Matches your current treatment.' : `This scenario uses ${d}% of your current dose. Your real treatment does not change.`),
     run: 'Run what-if', idle: 'This only changes the simulation.', stale: 'Slider moved. Run to see the new scenario.',
-    outcomes: 'HOW YOUR SIMULATED WEEK MAY CHANGE', heading: <>Current plan <b>→</b> <em>Scenario</em></>,
-    fields: (b, p, study) => [...(study ? [['Your study', study.name]] : []), ...(p ? [['Age', new Date().getFullYear() - Number(p.birthYear)], ['Condition', p.conditions.join(', ')], ['Activity', p.activity]] : []), ['Your treatment', (b.treatment || '—').split(' (')[0]], ['Current plan', b.dose], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`]],
+    outcomes: 'PREDICTED OUTCOMES', heading: <>Current <b>→</b> <em>Scenario</em></>,
+    fields: (b, p, study) => [...(study ? [['Your study', study.name]] : []), ...(p ? [['Age', new Date().getFullYear() - Number(p.birthYear)], ['Condition', p.conditions.join(', ')], ['Activity', p.activity]] : []), ['Treatment', (b.treatment || '—').split(' (')[0]], ['Current treatment', <DoseLines key="dose" dose={b.dose} />], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`]],
   },
 }
 
@@ -74,7 +80,6 @@ export default function WhatIfStudio({ patientId, patientName, twin, timeline, a
         <p className="studio-hint">{t.hint(dose)}</p>
         <button className="primary-button studio-run" type="button" disabled={sim.busy} onClick={run}>{sim.busy ? 'Simulating…' : t.run} <span aria-hidden="true">↗</span></button>
         <p className="studio-hint">{stale ? t.stale : t.idle}</p>
-        {patient && <p className="studio-safety">This is not a recommendation. Please don’t change how you take any medication based on this simulation. Talk to your study or care team about any treatment questions.</p>}
         {sim.error && <p className="form-error" role="alert">{sim.error}</p>}
         {!patient && <>
           <div className="form-rule" />
@@ -98,8 +103,8 @@ export default function WhatIfStudio({ patientId, patientName, twin, timeline, a
         <span className="eyebrow">{t.outcomes} · {cur ? cur.label.toUpperCase() : '—'}</span>
         <h2>{t.heading}</h2>
         {patient && cur && <p className="studio-summary">{simulated
-          ? <>In this simulation, changing treatment exposure from <b>100%</b> to <b>{ranDose}%</b> changes the modeled trajectory at {cur.label} in the following ways:</>
-          : <>Move the slider and run a what-if to compare a scenario with your current plan.</>}</p>}
+          ? <>In this simulation, changing the treatment dose from <b>100%</b> to <b>{ranDose}%</b> changes the modeled trajectory at {cur.label} in the following ways:</>
+          : <>Move the slider and run a what-if to compare a scenario with your current treatment.</>}</p>}
         <div className={`studio-metrics mode-${mode}`}>{cur && METRICS.map((m) => {
           const o = original[week][m.key]
           const d = modified[week][m.key]
