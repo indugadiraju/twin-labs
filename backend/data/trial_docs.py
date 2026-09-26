@@ -15,7 +15,7 @@ Two clearly separate kinds of data live here:
    each specific visit) — that level of detail lives in the internal
    study protocol, not the public registry. TAILORx's real follow-up
    cadence is "every 3-6 months for 5 years, then annually for 15 years"
-   (see REAL_TRIAL["follow_up"]), not weekly. TwinLab's demo still wants
+   (see REAL_TRIAL["follow_up"]), not weekly. TwinLabs' demo still wants
    to show a Week 1-4 patient journey, so this schedule is explicitly
    simulated for that purpose and is labeled as such everywhere it is
    used (data, API responses, and UI).

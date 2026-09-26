@@ -5,7 +5,7 @@ Explicitly NOT real patient data and NOT drawn from any public dataset
 (the UCI Wisconsin diagnostic tumor-morphology dataset was considered and
 rejected: it measures tumor cell nuclei, not the longitudinal
 patient-state variables — labs, symptoms, treatment, sleep — that a
-TwinLab digital twin actually needs). Every value here is generated.
+TwinLabs digital twin actually needs). Every value here is generated.
 
 Kept condition-specific-but-extensible: BASELINE_CONDITIONS maps a
 condition key to the treatment arms/doses appropriate to it, so a new

@@ -2,7 +2,7 @@
 Demo prediction outputs.
 
 This module intentionally provides a deterministic, clearly-labeled risk
-model for the TwinLab demo. It is not a clinical model; it is a simple
+model for the TwinLabs demo. It is not a clinical model; it is a simple
 heuristic used to populate the Week 1-4 timeline and patient twin views.
 """
 
@@ -85,7 +85,7 @@ def predict_week(patient: dict | object, treatment: str | None, week: int) -> di
     """
     Returns a deterministic demo risk prediction for a single week.
 
-    Expected output shape matches the TwinLab prediction tasks:
+    Expected output shape matches the TwinLabs prediction tasks:
       - fatigue, nausea, adverse_event, dropout_risk, pain,
         sleep_disruption, condition_specific_risks, uncertainty
     """
