@@ -10,7 +10,7 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`)
 // "My Twin" (patient) and "Patient Twin" (researcher): the same twin and
 // projected trajectory, without simulation controls. Audience changes copy
 // and information density only.
-export default function TwinExplorer({ patientId, twin, audience = 'patient', refreshKey }) {
+export default function TwinExplorer({ patientId, twin, audience = 'patient', refreshKey, profile, trial }) {
   const { original, error } = useCounterfactual(patientId, refreshKey)
   const [week, setWeek] = useState(0)
   const [metricKey, setMetricKey] = useState('risk_score')
@@ -33,8 +33,15 @@ export default function TwinExplorer({ patientId, twin, audience = 'patient', re
   return <div className="studio-view explorer-view">
     {patient && <header className="studio-intro page-width">
       <div><p className="eyebrow">YOUR DIGITAL TWIN</p><h2>What is happening<br /><em>with me?</em></h2></div>
-      <p>Your twin combines your synthetic starting profile, your check-ins and the demo’s simulated projections. Pick a week to see how it may look, and turn the views to explore symptoms, treatment and labs.</p>
+      <p>Your twin combines your health profile, your check-ins and the demo’s simulated projections. Pick a week to see how it may look, and turn the views to explore symptoms, treatment and labs.</p>
     </header>}
+    {patient && profile && <div className="page-width twin-profile-chips" aria-label="Initialized from your health profile">
+      <span>FROM YOUR HEALTH PROFILE</span>
+      {trial && <b>{trial.name}</b>}
+      <b>Age {new Date().getFullYear() - Number(profile.birthYear)}</b>{profile.conditions.map((c) => <b key={c}>{c}</b>)}<b>{profile.stage}</b><b>{profile.activity}</b>
+      {profile.currentTreatments?.filter((x) => x !== 'None yet').map((x) => <b key={x}>{x}</b>)}
+      {profile.organIssues && profile.organIssues !== 'none' && <b>{profile.organIssues === 'unsure' ? 'Kidney/liver: not sure' : `${profile.organIssues} issues noted`}</b>}
+    </div>}
     <div className="explorer-shell page-width">
       {error && <p className="form-error" role="alert">{error}</p>}
       <TwinStage twin={twin} original={original} modified={original} week={week} audience={audience} uncertainty={jw?.prediction?.uncertainty} compare={false} />

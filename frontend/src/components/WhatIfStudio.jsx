@@ -20,24 +20,25 @@ const COPY = {
     hint: (d) => (d === 100 ? 'Current prescribed dose.' : `${d}% of the current prescribed dose.`),
     run: 'Run simulation', idle: 'One variable at a time. More controls coming.', stale: 'Slider changed. Run to update the modified twin.',
     outcomes: 'PREDICTED OUTCOMES', heading: <>Original <b>→</b> <em>Modified</em></>,
-    fields: (b) => [['Age', b.age], ['Treatment', b.treatment], ['Current dose', b.dose], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`], ['Recurrence score', b.condition_specific?.oncotype_dx_recurrence_score ?? '—']],
+    fields: (b, _profile, study) => [...(study ? [['Study', `${study.phase} · ${study.name}`]] : []), ['Age', b.age], ['Treatment', b.treatment], ['Current dose', b.dose], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`], ['Recurrence score', b.condition_specific?.oncotype_dx_recurrence_score ?? '—']],
   },
   patient: {
     context: 'ABOUT YOUR TWIN', control: 'EXPLORE A SCENARIO', dose: 'Simulated treatment exposure', current: '100% · current plan',
     hint: (d) => (d === 100 ? 'Matches your current plan in the simulation.' : `The simulation uses ${d}% of your current plan. Your real treatment does not change.`),
     run: 'Run what-if', idle: 'This only changes the simulation.', stale: 'Slider moved. Run to see the new scenario.',
     outcomes: 'HOW YOUR SIMULATED WEEK MAY CHANGE', heading: <>Current plan <b>→</b> <em>Scenario</em></>,
-    fields: (b) => [['Your treatment', (b.treatment || '—').split(' (')[0]], ['Current plan', b.dose], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`]],
+    fields: (b, p, study) => [...(study ? [['Your study', study.name]] : []), ...(p ? [['Age', new Date().getFullYear() - Number(p.birthYear)], ['Condition', p.conditions.join(', ')], ['Activity', p.activity]] : []), ['Your treatment', (b.treatment || '—').split(' (')[0]], ['Current plan', b.dose], ['Kidney function', `${b.kidney_function?.egfr_ml_min_1_73m2 ?? '—'} eGFR`]],
   },
 }
 
-export default function WhatIfStudio({ patientId, patientName, twin, timeline, audience = 'researcher', refreshKey }) {
+export default function WhatIfStudio({ patientId, patientName, twin, timeline, audience = 'researcher', refreshKey, profile, trial, cadence }) {
   const sim = useCounterfactual(patientId, refreshKey)
   const [dose, setDose] = useState(100)
   const [metricKey, setMetricKey] = useState('risk_score')
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [mode, setMode] = useState('original')
-  const [protocol, setProtocol] = useState(DEFAULT_PROTOCOL)
+  // The study setup's check-in cadence is the starting schedule (still adjustable here).
+  const [protocol, setProtocol] = useState({ ...DEFAULT_PROTOCOL, cadence: cadence || DEFAULT_PROTOCOL.cadence })
   const t = COPY[audience] || COPY.researcher
   const patient = audience === 'patient'
 
@@ -64,7 +65,7 @@ export default function WhatIfStudio({ patientId, patientName, twin, timeline, a
       <aside className="checkin-panel studio-controls">
         <div className="panel-top"><span className="eyebrow eyebrow-dark">{t.context}</span><span className="step-mark">SYNTHETIC</span></div>
         <h3 className="studio-patient">{patientName}</h3>
-        <dl className="studio-context">{baseline && t.fields(baseline).map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
+        <dl className="studio-context">{baseline && t.fields(baseline, profile, trial).map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
         <div className="form-rule" />
         <span className="eyebrow eyebrow-dark">{t.control}</span>
         <label className="range-question studio-dose-label" htmlFor="dose">{t.dose} <strong>{dose}%</strong></label>
