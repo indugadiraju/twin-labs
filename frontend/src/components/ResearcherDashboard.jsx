@@ -108,7 +108,7 @@ function RiskGauge({ score, label }) {
   </div>
 }
 
-export default function ResearcherDashboard({ patientId, onPatientView }) {
+export default function ResearcherDashboard({ patientId, onExit }) {
   const [cohort, setCohort] = useState(null)
   const [patients, setPatients] = useState([])
   const [selectedId, setSelectedId] = useState(patientId)
@@ -204,10 +204,7 @@ export default function ResearcherDashboard({ patientId, onPatientView }) {
     <header className="researcher-header">
       <nav className="researcher-nav page-width" aria-label="Researcher navigation">
         <a className="wordmark researcher-wordmark" href="#researcher-top"><span>✳</span> TwinLabs<span className="wordmark-dot">.</span></a>
-        <div className="experience-switch" aria-label="Experience switcher">
-          <button type="button" onClick={onPatientView}>Patient</button>
-          <button type="button" className="selected" aria-current="page">Researcher</button>
-        </div>
+        <button type="button" className="researcher-exit" onClick={onExit}>Exit researcher portal</button>
         <span className="researcher-avatar" aria-label="Researcher profile">CL</span>
       </nav>
 
