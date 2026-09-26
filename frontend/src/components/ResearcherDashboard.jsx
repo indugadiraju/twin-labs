@@ -109,7 +109,11 @@ function RiskGauge({ score, label }) {
   </div>
 }
 
-export default function ResearcherDashboard({ patientId, onExit }) {
+// Optional extra researcher sections (e.g. Patient Twin, What-If Studio) share this
+// header: [{ id, label, kicker?, title?, em?, description?, content? }]. Without
+// `sections` the dashboard renders exactly as before.
+export default function ResearcherDashboard({ patientId, onExit, sections, section = 'dashboard', onSection }) {
+  const extra = sections?.find((item) => item.id === section && item.content)
   const [cohort, setCohort] = useState(null)
   const [patients, setPatients] = useState([])
   const [selectedId, setSelectedId] = useState(patientId)
@@ -227,7 +231,8 @@ export default function ResearcherDashboard({ patientId, onExit }) {
         <button type="button" className="researcher-exit" onClick={onExit}>Exit researcher portal</button>
         <span className="researcher-avatar" aria-label="Researcher profile">CL</span>
       </nav>
-
+      {sections && <nav className="app-tabs research-tabs page-width" aria-label="Researcher sections">{sections.map(({ id, label }) => <button type="button" key={id} aria-current={section === id ? 'page' : undefined} className={section === id ? 'active' : ''} onClick={() => onSection(id)}>{label}</button>)}</nav>}
+      {extra ? <div className="studio-header page-width"><div><p className="researcher-kicker">{extra.kicker}</p><h1>{extra.title} <em>{extra.em}</em></h1></div><p>{extra.description}</p></div> : <>
       <div className="researcher-hero page-width" id="researcher-top">
         <div className="researcher-hero-copy">
           <div className="live-model-label"><span className="live-pulse" />DIGITAL TWIN NETWORK · DEMO</div>
@@ -245,9 +250,10 @@ export default function ResearcherDashboard({ patientId, onExit }) {
       <div className="signal-rail" aria-hidden="true">
         <div><span>SIMULATED COHORT DATA</span><b>✳</b><span>PATIENT-REPORTED SIGNALS</span><b>✳</b><span>4-WEEK RISK FORECAST</span><b>✳</b><span>TRANSPARENT ATTRIBUTION</span></div>
       </div>
+      </>}
     </header>
 
-    <main className="researcher-main page-width">
+    {extra ? extra.content : <main className="researcher-main page-width">
       {error && <div className="researcher-error" role="alert">{error}<button type="button" onClick={() => loadDashboard(true)}>Try again</button></div>}
       {loading ? <div className="researcher-loading" role="status"><div /><div /><div /></div> : <>
         <section className="cohort-overview" aria-labelledby="cohort-title">
@@ -329,7 +335,7 @@ export default function ResearcherDashboard({ patientId, onExit }) {
           </div>
         </section>
       </>}
-    </main>
+    </main>}
     <footer className="researcher-footer page-width"><span>✳ TwinLabs.</span><p>All patient and cohort data shown here is synthetic or simulated. Forecasts use transparent deterministic prototype rules and are not medical advice.</p><b>RESEARCHER INTELLIGENCE · 2026</b></footer>
   </div>
 }

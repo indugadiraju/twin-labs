@@ -53,4 +53,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ question }),
     }),
+
+  runCounterfactual: (patientId, change, weeks = 4) =>
+    request(`/patients/${patientId}/counterfactual`, {
+      method: 'POST',
+      body: JSON.stringify({ change, weeks }),
+    }),
 }
