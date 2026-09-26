@@ -362,3 +362,40 @@
 .twin-profile-chips { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:-14px; margin-bottom:22px; }
 .twin-profile-chips span { color:#cba9e9; font-size:10px; font-weight:800; letter-spacing:.16em; margin-right:4px; }
 .twin-profile-chips b { padding:6px 11px; border:1px solid rgba(203,169,233,.3); border-radius:100px; background:rgba(255,255,255,.05); color:#f0dff9; font-size:11.5px; font-weight:600; }
+
+/* Fully purple What-If Studio / Patient Twin (researcher + patient) */
+.researcher-header.researcher-header-studio { color:white; background:radial-gradient(ellipse 60% 80% at 80% 10%,rgba(169,116,218,.35),transparent 60%),linear-gradient(150deg,#170722 0%,#331348 55%,#40217b 100%); background-size:auto; }
+.researcher-header.researcher-header-studio::before,.researcher-header.researcher-header-studio::after { opacity:.25; }
+.researcher-header-studio .researcher-nav { border-bottom-color:rgba(255,255,255,.14); }
+.researcher-header-studio .researcher-wordmark { color:white; }
+.researcher-header-studio .researcher-exit { color:#f0dff9; border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.08); }
+.researcher-header-studio .researcher-avatar { color:#251038; background:#e4d4ff; border-color:rgba(255,255,255,.4); }
+.researcher-header-studio .research-tabs { color:white; border-bottom-color:rgba(255,255,255,.16); }
+.researcher-header-studio .researcher-kicker { color:#e8d4fa; }
+.researcher-header-studio .studio-header h1 { color:white; }
+.researcher-header-studio .studio-header h1 em { color:#f6c6ef; }
+.researcher-header-studio .studio-header>p { color:rgba(255,255,255,.78); }
+.studio-view .checkin-panel.studio-controls { color:white; background:linear-gradient(165deg,rgba(108,59,239,.32),rgba(36,16,52,.92) 45%),#241034; border:1px solid rgba(203,169,233,.22); box-shadow:0 24px 70px rgba(8,2,18,.4),inset 0 1px 0 rgba(255,255,255,.08); border-radius:7px; }
+.studio-view .checkin-panel.studio-controls .eyebrow-dark,.studio-view .checkin-panel.studio-controls .checkin-plan>span { color:#cba9e9; }
+.studio-view .checkin-panel.studio-controls .step-mark { color:#b5a1c4; }
+.studio-view .checkin-panel.studio-controls .studio-context>div { border-bottom-color:rgba(255,255,255,.1); }
+.studio-view .checkin-panel.studio-controls .studio-context dt { color:#b5a1c4; }
+.studio-view .checkin-panel.studio-controls .studio-context dd { color:#f3e6ff; }
+.studio-view .checkin-panel.studio-controls .form-rule { background:rgba(255,255,255,.12); }
+.studio-view .checkin-panel.studio-controls .range-question { color:white; }
+.studio-view .checkin-panel.studio-controls .range-question strong { color:#e6bdf6; }
+.studio-view .checkin-panel.studio-controls .range-ends,.studio-view .checkin-panel.studio-controls .studio-hint { color:#b5a1c4; }
+.studio-view .checkin-panel.studio-controls input[type=range] { background:linear-gradient(90deg,#9157ed,#e38bd8); }
+.studio-view .checkin-panel.studio-controls input[type=range]::-webkit-slider-thumb { background:#f3c8ee; border-color:#241034; box-shadow:0 0 12px rgba(243,200,238,.7); }
+.studio-view .checkin-panel.studio-controls .choice-pill { background:rgba(255,255,255,.05); color:#e4d4ff; border-color:rgba(203,169,233,.3); }
+.studio-view .checkin-panel.studio-controls .choice-pill.chosen { background:linear-gradient(90deg,#9157ed,#e38bd8); color:white; border-color:transparent; }
+.studio-view .checkin-panel.studio-controls .checkin-plan { background:rgba(255,255,255,.05); border-left-color:#e38bd8; }
+.studio-view .checkin-panel.studio-controls .checkin-plan strong { color:white; }
+.studio-view .checkin-panel.studio-controls .checkin-plan strong small,.studio-view .checkin-panel.studio-controls .checkin-plan>small { color:#b5a1c4; }
+.studio-view .checkin-panel.studio-controls .checkin-plan p { color:#d2c2db; }
+.studio-view .checkin-panel.studio-controls .checkin-plan b { color:#f0c2ec; }
+.studio-view .checkin-panel.studio-controls .studio-safety { background:rgba(227,139,216,.1); border-left-color:#e38bd8; color:#f3e6ff; }
+.studio-view .checkin-panel.studio-controls .form-error { color:#ffb3c8; }
+/* The patient stylesheet styles inputs inside .site-shell; keep them purple inside the studio. */
+.studio-view .checkin-panel.studio-controls .plain-input { background:rgba(255,255,255,.06); border-color:rgba(203,169,233,.3); color:white; }
+.studio-view .checkin-panel.studio-controls .studio-patient { color:white; }
